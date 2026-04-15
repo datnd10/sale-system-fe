@@ -9,11 +9,14 @@ const apiClient = axios.create({
 // Response interceptor: unwrap ApiResponse<T>
 apiClient.interceptors.response.use(
   (response) => {
+    console.log(response);
+    
     const apiResponse: ApiResponse<unknown> = response.data;
     if (!apiResponse.success) {
       return Promise.reject(new Error(apiResponse.message));
     }
-    return apiResponse.data as never; // return T directly
+    response.data = apiResponse.data;
+    return response;
   },
   (error) => {
     // Network error or HTTP error status
