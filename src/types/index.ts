@@ -54,11 +54,24 @@ export interface Product {
   name: string;
   categoryId: number;
   categoryName: string;
-  unit: string; // kg, tấm, cây, ...
+  unit: string;       // enum key: KG, TAN, CAY, MET, CAI, M2
   price: number;
+  width?: number;     // chiều rộng mặc định (tùy chọn)
   description?: string;
   active: boolean;
 }
+
+// Enum ProductUnit — phải khớp với BE
+export type ProductUnit = 'KG' | 'TAN' | 'CAY' | 'MET' | 'CAI' | 'M2';
+
+export const PRODUCT_UNIT_OPTIONS: { value: ProductUnit; label: string; description: string }[] = [
+  { value: 'KG',  label: 'kg',  description: 'Kilogram' },
+  { value: 'TAN', label: 'tấn', description: 'Tấn' },
+  { value: 'CAY', label: 'cây', description: 'Cây / thanh' },
+  { value: 'MET', label: 'm',   description: 'Mét' },
+  { value: 'CAI', label: 'cái', description: 'Cái' },
+  { value: 'M2',  label: 'm²',  description: 'Mét vuông' },
+];
 
 export interface Customer {
   id: number;
@@ -161,16 +174,18 @@ export interface UpdateCategoryDto {
 export interface CreateProductDto {
   name: string;
   categoryId: number;
-  unit: string;
+  unit: ProductUnit;
   price: number;
+  width?: number;
   description?: string;
 }
 
 export interface UpdateProductDto {
   name: string;
   categoryId: number;
-  unit: string;
+  unit: ProductUnit;
   price: number;
+  width?: number;
   description?: string;
 }
 

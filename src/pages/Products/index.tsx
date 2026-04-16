@@ -13,6 +13,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import ProductForm from '../../components/forms/ProductForm';
 import { formatCurrency } from '../../utils/formatters';
+import { PRODUCT_UNIT_OPTIONS } from '../../types';
 import type { Product, CreateProductDto, ProductSearchParams } from '../../types';
 
 const { Title } = Typography;
@@ -109,6 +110,15 @@ const Products = () => {
       dataIndex: 'unit',
       key: 'unit',
       width: 100,
+      render: (unit: string) =>
+        PRODUCT_UNIT_OPTIONS.find((u) => u.value === unit)?.label ?? unit,
+    },
+    {
+      title: 'Rộng (m)',
+      dataIndex: 'width',
+      key: 'width',
+      width: 100,
+      render: (width?: number) => width ?? '—',
     },
     {
       title: 'Giá bán',
@@ -169,7 +179,7 @@ const Products = () => {
         }}
       >
         <Title level={2} style={{ margin: 0 }}>
-          Sản phẩm
+          Quản Lý Sản Phẩm
         </Title>
         <Button
           type="primary"
@@ -193,14 +203,6 @@ const Products = () => {
           onChange={(e) => setInputValue(e.target.value)}
           onPressEnter={handleSearch}
         />
-        <Button
-          type="primary"
-          icon={<SearchOutlined />}
-          size="large"
-          onClick={handleSearch}
-        >
-          Tìm kiếm
-        </Button>
         <Select
           placeholder="Lọc theo danh mục"
           size="large"
@@ -210,6 +212,15 @@ const Products = () => {
           options={categories?.map((c) => ({ value: c.id, label: c.name }))}
           onChange={handleCategoryFilter}
         />
+        <Button
+          type="primary"
+          icon={<SearchOutlined />}
+          size="large"
+          onClick={handleSearch}
+        >
+          Tìm kiếm
+        </Button>
+        
       </Space>
 
       <Table<Product>
@@ -250,8 +261,9 @@ const Products = () => {
               ? {
                   name: editingProduct.name,
                   categoryId: editingProduct.categoryId,
-                  unit: editingProduct.unit,
+                  unit: editingProduct.unit as import('../../types').ProductUnit,
                   price: editingProduct.price,
+                  width: editingProduct.width,
                   description: editingProduct.description,
                 }
               : undefined
