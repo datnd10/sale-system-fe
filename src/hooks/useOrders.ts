@@ -7,9 +7,9 @@ import {
   createOrder,
   deleteOrder,
   updateOrderNote,
+  updateOrder,
 } from '../api/orders';
 import type { CreateOrderDto, OrderFilters } from '../types';
-
 export const useOrders = (filters?: OrderFilters) =>
   useQuery({
     queryKey: QUERY_KEYS.orders(filters),
@@ -58,6 +58,23 @@ export const useUpdateOrderNote = () => {
     onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.order(variables.id) });
       notification.success({ message: 'Cập nhật ghi chú thành công' });
+    },
+    onError: (error: Error) => {
+      notification.error({ message: 'Lỗi', description: error.message });
+    },
+  });
+};
+
+export const useUpdateOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CreateOrderDto }) => updateOrder(id, data),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.order(variables.id) });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['debts'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      notification.success({ message: 'Cập nhật đơn hàng thành công' });
     },
     onError: (error: Error) => {
       notification.error({ message: 'Lỗi', description: error.message });

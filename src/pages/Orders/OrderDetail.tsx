@@ -12,7 +12,7 @@ import {
   Table,
   Typography,
 } from 'antd';
-import { ArrowLeftOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useOrderById, useDeleteOrder, useUpdateOrderNote } from '../../hooks/useOrders';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -138,11 +138,7 @@ const OrderDetail = () => {
         }}
       >
         <Space>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            size="large"
-            onClick={() => navigate('/orders')}
-          >
+          <Button icon={<ArrowLeftOutlined />} size="large" onClick={() => navigate('/orders')}>
             Quay lại
           </Button>
           <Title level={2} style={{ margin: 0 }}>
@@ -150,23 +146,27 @@ const OrderDetail = () => {
           </Title>
         </Space>
 
-        <Popconfirm
-          title="Xóa đơn hàng"
-          description="Bạn có chắc muốn xóa đơn hàng này không?"
-          onConfirm={handleDelete}
-          okText="Xóa"
-          cancelText="Hủy"
-          okButtonProps={{ danger: true }}
-        >
+        <Space>
           <Button
-            danger
-            icon={<DeleteOutlined />}
+            icon={<EditOutlined />}
             size="large"
-            loading={deleteOrder.isPending}
+            onClick={() => navigate(`/orders/${orderId}/edit`)}
           >
-            Xóa đơn
+            Sửa đơn
           </Button>
-        </Popconfirm>
+          <Popconfirm
+            title="Xóa đơn hàng"
+            description="Bạn có chắc muốn xóa đơn hàng này không?"
+            onConfirm={handleDelete}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+          >
+            <Button danger icon={<DeleteOutlined />} size="large" loading={deleteOrder.isPending}>
+              Xóa đơn
+            </Button>
+          </Popconfirm>
+        </Space>
       </div>
 
       {/* Order info */}
@@ -192,17 +192,6 @@ const OrderDetail = () => {
               <Descriptions.Item label="Đã thanh toán">
                 <Text strong style={{ fontSize: 16, color: '#52c41a' }}>
                   {formatCurrency(order.paidImmediately)}
-                </Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Còn nợ">
-                <Text
-                  strong
-                  style={{
-                    fontSize: 16,
-                    color: order.remainingDebt > 0 ? '#ff4d4f' : '#52c41a',
-                  }}
-                >
-                  {formatCurrency(order.remainingDebt)}
                 </Text>
               </Descriptions.Item>
             </Descriptions>

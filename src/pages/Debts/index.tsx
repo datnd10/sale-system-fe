@@ -36,12 +36,12 @@ const Debts = () => {
     },
     {
       title: 'Tổng nợ còn lại',
-      dataIndex: 'totalDebt',
-      key: 'totalDebt',
+      dataIndex: 'totalRemaining',
+      key: 'totalRemaining',
       align: 'right',
-      render: (totalDebt: number) => (
-        <Text style={{ color: totalDebt > 0 ? '#ff4d4f' : undefined }}>
-          {formatCurrency(totalDebt)}
+      render: (totalRemaining: number) => (
+        <Text style={{ color: totalRemaining > 0 ? '#ff4d4f' : undefined }}>
+          {formatCurrency(Number(totalRemaining) || 0)}
         </Text>
       ),
     },
@@ -90,7 +90,7 @@ const Debts = () => {
     );
   }
 
-  const totalAllDebts = debtList.reduce((sum, item) => sum + item.totalDebt, 0);
+  const totalAllDebts = debtList.reduce((sum, item) => sum + (Number(item.totalRemaining) || 0), 0);
 
   return (
     <div style={{ padding: '24px' }}>

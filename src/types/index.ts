@@ -157,7 +157,7 @@ export interface DebtSummary {
   customerCode: string;
   customerName: string;
   customerPhone?: string;
-  totalDebt: number;
+  totalRemaining: number; // field từ BE: totalRemaining
 }
 
 // DTOs

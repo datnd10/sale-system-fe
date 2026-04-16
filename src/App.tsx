@@ -8,6 +8,7 @@ import CustomerDetail from './pages/Customers/CustomerDetail';
 import Orders from './pages/Orders';
 import OrderNew from './pages/Orders/OrderNew';
 import OrderDetail from './pages/Orders/OrderDetail';
+import OrderEdit from './pages/Orders/OrderEdit';
 import Debts from './pages/Debts';
 import Payments from './pages/Payments';
 
@@ -24,6 +25,7 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="orders/new" element={<OrderNew />} />
           <Route path="orders/:id" element={<OrderDetail />} />
+          <Route path="orders/:id/edit" element={<OrderEdit />} />
           <Route path="debts" element={<Debts />} />
           <Route path="payments" element={<Payments />} />
           <Route path="*" element={<Navigate to="/" replace />} />

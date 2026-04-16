@@ -1,33 +1,49 @@
 import { Button, Col, Form, InputNumber, Row, Select, Typography } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useProducts } from '../../hooks/useProducts';
+import { PRODUCT_UNIT_OPTIONS } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import type { CreateOrderItemDto } from '../../types';
 
 const { Text } = Typography;
 
 interface OrderItemRowProps {
-  /** Index of this item in the Form.List */
   index: number;
-  /** Called when the user clicks the delete button */
   onRemove: () => void;
-  /** Current values for this row (used to compute subtotal) */
   values: Partial<CreateOrderItemDto>;
-  /** Called when the product selection changes so the parent can update unitPrice */
-  onProductChange: (productId: number, unitPrice: number) => void;
+  onProductChange: (productId: number, unitPrice: number, width?: number) => void;
 }
 
 const OrderItemRow = ({ index, onRemove, values, onProductChange }: OrderItemRowProps) => {
   const { data: products, isLoading: productsLoading } = useProducts();
 
-  const count = values?.count ?? 0;
-  const unitPrice = values?.unitPrice ?? 0;
-  const subtotal = count * unitPrice;
+  // Watch từng field trong row để tính subtotal real-time
+  const count: number = Form.useWatch(['items', index, 'count']) ?? 0;
+  const length: number = Form.useWatch(['items', index, 'length']) ?? 0;
+  const width: number = Form.useWatch(['items', index, 'width']) ?? 0;
+  const unitPrice: number = Form.useWatch(['items', index, 'unitPrice']) ?? 0;
+  const productId: number = Form.useWatch(['items', index, 'productId']);
 
-  const handleProductSelect = (productId: number) => {
-    const product = products?.find((p) => p.id === productId);
+  const selectedProduct = products?.find((p) => p.id === productId);
+  const isM2 = selectedProduct?.unit === 'M2';
+  const isMet = selectedProduct?.unit === 'MET';
+
+  // Tính subtotal theo đúng công thức BE
+  const subtotal = (() => {
+    if (!count || !unitPrice) return 0;
+    if (isM2) return count * (length || 0) * (width || 0) * unitPrice;
+    if (isMet) return count * (length || 0) * unitPrice;
+    return count * unitPrice;
+  })();
+
+  const unitLabel = selectedProduct
+    ? (PRODUCT_UNIT_OPTIONS.find((u) => u.value === selectedProduct.unit)?.label ?? selectedProduct.unit)
+    : '';
+
+  const handleProductSelect = (pid: number) => {
+    const product = products?.find((p) => p.id === pid);
     if (product) {
-      onProductChange(productId, product.price);
+      onProductChange(pid, product.price, product.width ?? undefined);
     }
   };
 
@@ -36,14 +52,14 @@ const OrderItemRow = ({ index, onRemove, values, onProductChange }: OrderItemRow
       style={{
         border: '1px solid #f0f0f0',
         borderRadius: 8,
-        padding: '16px',
-        marginBottom: 12,
+        padding: '12px 16px',
+        marginBottom: 10,
         background: '#fafafa',
       }}
     >
-      <Row gutter={[12, 8]} align="middle">
-        {/* Product select */}
-        <Col xs={24} sm={10}>
+      <Row gutter={[10, 0]} align="bottom" wrap={false}>
+        {/* Sản phẩm */}
+        <Col flex="220px">
           <Form.Item
             name={[index, 'productId']}
             label="Sản phẩm"
@@ -56,115 +72,105 @@ const OrderItemRow = ({ index, onRemove, values, onProductChange }: OrderItemRow
               loading={productsLoading}
               showSearch
               optionFilterProp="label"
-              options={products?.map((p) => ({
-                value: p.id,
-                label: `${p.name} (${p.unit})`,
-              }))}
+              options={products?.map((p) => ({ value: p.id, label: p.name }))}
               onChange={handleProductSelect}
             />
           </Form.Item>
         </Col>
 
-        {/* Count */}
-        <Col xs={12} sm={4}>
+        {/* Số lượng */}
+        <Col flex="100px">
           <Form.Item
             name={[index, 'count']}
-            label="Số lượng"
-            rules={[
-              { required: true, message: 'Nhập SL' },
-              { type: 'number', min: 1, message: 'SL > 0' },
-            ]}
-            style={{ marginBottom: 0 }}
-          >
-            <InputNumber
-              placeholder="SL"
-              size="large"
-              min={1}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-        </Col>
-
-        {/* Length (optional) */}
-        <Col xs={12} sm={4}>
-          <Form.Item
-            name={[index, 'length']}
-            label="Chiều dài"
-            style={{ marginBottom: 0 }}
-          >
-            <InputNumber
-              placeholder="m"
-              size="large"
-              min={0}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-        </Col>
-
-        {/* Width (optional) */}
-        <Col xs={12} sm={4}>
-          <Form.Item
-            name={[index, 'width']}
-            label="Chiều rộng"
-            style={{ marginBottom: 0 }}
-          >
-            <InputNumber
-              placeholder="m"
-              size="large"
-              min={0}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-        </Col>
-
-        {/* Delete button */}
-        <Col xs={12} sm={2} style={{ textAlign: 'right' }}>
-          <Form.Item label=" " style={{ marginBottom: 0 }}>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              size="large"
-              onClick={onRemove}
-              title="Xóa dòng"
-            />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Row gutter={[12, 8]} style={{ marginTop: 8 }}>
-        {/* Unit price */}
-        <Col xs={24} sm={10}>
-          <Form.Item
-            name={[index, 'unitPrice']}
-            label="Đơn giá"
-            rules={[
-              { required: true, message: 'Nhập đơn giá' },
-              { type: 'number', min: 1, message: 'Đơn giá > 0' },
-            ]}
+            label={`SL${unitLabel ? ` (${unitLabel})` : ''}`}
+            rules={[{ required: true, message: 'Nhập SL' }]}
             style={{ marginBottom: 0 }}
           >
             <InputNumber<number>
-              placeholder="Đơn giá"
+              placeholder="1"
+              size="large"
+              min={1}
+              step={1}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+        </Col>
+
+        {/* Chiều dài — chỉ hiện với M2 và MET */}
+        <Col flex="100px">
+          <Form.Item
+            name={[index, 'length']}
+            label="Dài (m)"
+            style={{ marginBottom: 0 }}
+          >
+            <InputNumber<number>
+              placeholder="—"
+              size="large"
+              min={0}
+              step={0.01}
+              style={{ width: '100%' }}
+              disabled={!isM2 && !isMet}
+            />
+          </Form.Item>
+        </Col>
+
+        {/* Chiều rộng — chỉ dùng với M2 */}
+        <Col flex="100px">
+          <Form.Item
+            name={[index, 'width']}
+            label="Rộng (m)"
+            style={{ marginBottom: 0 }}
+          >
+            <InputNumber<number>
+              placeholder="—"
+              size="large"
+              min={0}
+              step={0.01}
+              style={{ width: '100%' }}
+              disabled={!isM2}
+            />
+          </Form.Item>
+        </Col>
+
+        {/* Đơn giá */}
+        <Col flex="160px">
+          <Form.Item
+            name={[index, 'unitPrice']}
+            label="Đơn giá (₫)"
+            rules={[{ required: true, message: 'Nhập đơn giá' }]}
+            style={{ marginBottom: 0 }}
+          >
+            <InputNumber<number>
+              placeholder="0"
               size="large"
               min={1}
               style={{ width: '100%' }}
               formatter={(value) =>
                 value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''
               }
-              parser={(value) => Number(value?.replace(/\./g, '') ?? 0)}
-              addonAfter="₫"
+              parser={(value) => {
+                if (!value) return 0;
+                const cleaned = value.replace(/\./g, '').replace(/[^\d]/g, '');
+                return cleaned ? parseInt(cleaned, 10) : 0;
+              }}
             />
           </Form.Item>
         </Col>
 
-        {/* Subtotal display */}
-        <Col xs={24} sm={14} style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
-          <Text style={{ fontSize: 16 }}>
-            Thành tiền:{' '}
-            <Text strong style={{ fontSize: 16, color: subtotal > 0 ? '#1677ff' : undefined }}>
+        {/* Thành tiền */}
+        <Col flex="auto" style={{ textAlign: 'right' }}>
+          <Form.Item label="Thành tiền" style={{ marginBottom: 0 }}>
+            <Text strong style={{ fontSize: 16, color: subtotal > 0 ? '#1677ff' : '#aaa' }}>
               {subtotal > 0 ? formatCurrency(subtotal) : '—'}
             </Text>
-          </Text>
+          </Form.Item>
+        </Col>
+
+        {/* Xóa */}
+        <Col flex="40px">
+          <Form.Item label=" " style={{ marginBottom: 0 }}>
+            <Button danger icon={<DeleteOutlined />} size="large" onClick={onRemove} />
+          </Form.Item>
         </Col>
       </Row>
     </div>

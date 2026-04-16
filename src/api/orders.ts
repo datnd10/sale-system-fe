@@ -20,3 +20,6 @@ export const deleteOrder = (id: number): Promise<void> =>
 
 export const updateOrderNote = (id: number, note: string): Promise<Order> =>
   apiClient.patch(`/api/orders/${id}/note`, { note });
+
+export const updateOrder = (id: number, data: CreateOrderDto): Promise<Order> =>
+  apiClient.put(`/api/orders/${id}`, data);

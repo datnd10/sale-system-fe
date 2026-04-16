@@ -81,18 +81,6 @@ const Orders = () => {
       ),
     },
     {
-      title: 'Còn nợ',
-      dataIndex: 'remainingDebt',
-      key: 'remainingDebt',
-      width: 160,
-      align: 'right',
-      render: (amount: number) => (
-        <span style={{ color: amount > 0 ? '#ff4d4f' : undefined }}>
-          {formatCurrency(amount)}
-        </span>
-      ),
-    },
-    {
       title: 'Thao tác',
       key: 'actions',
       width: 130,
