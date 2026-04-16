@@ -1,14 +1,17 @@
-import type { OrderFilters, PaymentFilters } from '../types';
+import type { OrderFilters, PaymentFilters, CategorySearchParams, ProductSearchParams, CustomerSearchParams } from '../types';
 
 export const QUERY_KEYS = {
   // Categories
   categories: ['categories'] as const,
+  categoriesSearch: (params: CategorySearchParams) => ['categories', 'search', params] as const,
 
   // Products
   products: (categoryId?: number) => ['products', categoryId] as const,
+  productsSearch: (params: ProductSearchParams) => ['products', 'search', params] as const,
 
   // Customers
   customers: ['customers'] as const,
+  customersSearch: (params: CustomerSearchParams) => ['customers', 'search', params] as const,
   customer: (id: number) => ['customers', id] as const,
 
   // Orders

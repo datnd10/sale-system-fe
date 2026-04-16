@@ -142,7 +142,7 @@ const Dashboard = () => {
                 title={<span style={{ fontSize: 16 }}>Tổng đơn hàng</span>}
                 value={stats?.totalOrders ?? 0}
                 prefix={<ShoppingCartOutlined />}
-                valueStyle={{ fontSize: 28, fontWeight: 700 }}
+                styles={{ content: { fontSize: 28, fontWeight: 700 } }}
               />
             </Card>
           </Col>

@@ -3,16 +3,23 @@ import { notification } from 'antd';
 import { QUERY_KEYS } from '../utils/queryKeys';
 import {
   getProducts,
+  searchProducts,
   createProduct,
   updateProduct,
   deleteProduct,
 } from '../api/products';
-import type { UpdateProductDto } from '../types';
+import type { ProductSearchParams, UpdateProductDto } from '../types';
 
 export const useProducts = (categoryId?: number) =>
   useQuery({
     queryKey: QUERY_KEYS.products(categoryId),
     queryFn: () => getProducts(categoryId),
+  });
+
+export const useSearchProducts = (params: ProductSearchParams) =>
+  useQuery({
+    queryKey: QUERY_KEYS.productsSearch(params),
+    queryFn: () => searchProducts(params),
   });
 
 export const useCreateProduct = () => {
@@ -21,6 +28,7 @@ export const useCreateProduct = () => {
     mutationFn: createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', 'search'] });
       notification.success({ message: 'Thêm sản phẩm thành công' });
     },
     onError: (error: Error) => {
@@ -36,6 +44,7 @@ export const useUpdateProduct = () => {
       updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', 'search'] });
       notification.success({ message: 'Cập nhật sản phẩm thành công' });
     },
     onError: (error: Error) => {
@@ -50,6 +59,7 @@ export const useDeleteProduct = () => {
     mutationFn: (id: number) => deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', 'search'] });
       notification.success({ message: 'Xóa sản phẩm thành công' });
     },
     onError: (error: Error) => {

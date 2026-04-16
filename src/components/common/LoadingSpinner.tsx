@@ -15,7 +15,7 @@ const LoadingSpinner = ({ tip = 'Đang tải...' }: LoadingSpinnerProps) => {
         width: '100%',
       }}
     >
-      <Spin size="large" tip={tip} />
+      <Spin size="large" description={tip} />
     </div>
   );
 };

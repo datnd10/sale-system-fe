@@ -9,18 +9,16 @@ const apiClient = axios.create({
 // Response interceptor: unwrap ApiResponse<T>
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(response);
-    
     const apiResponse: ApiResponse<unknown> = response.data;
     if (!apiResponse.success) {
       return Promise.reject(new Error(apiResponse.message));
     }
-    response.data = apiResponse.data;
-    return response;
+    // Trả về data trực tiếp, không cần .then(res => res.data) ở API functions
+    return apiResponse.data as never;
   },
   (error) => {
-    // Network error or HTTP error status
-    const message =
+    // Ưu tiên message từ BE, fallback nếu không có
+    const message: string =
       error.response?.data?.message ||
       (error.response?.status === 404
         ? 'Không tìm thấy dữ liệu'

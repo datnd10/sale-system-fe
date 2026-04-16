@@ -8,6 +8,7 @@ import { useOrders } from '../../hooks/useOrders';
 import { useCustomers } from '../../hooks/useCustomers';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
+import { defaultPagination } from '../../utils/tableConfig';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import type { Order, OrderFilters } from '../../types';
 
@@ -169,7 +170,7 @@ const Orders = () => {
         dataSource={orders ?? []}
         columns={columns}
         rowKey="id"
-        pagination={{ pageSize: 20 }}
+        pagination={defaultPagination}
         size="middle"
         style={{ fontSize: 16 }}
         locale={{ emptyText: 'Chưa có đơn hàng nào' }}

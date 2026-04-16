@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Button, Modal, Popconfirm, Select, Space, Table, Typography } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import { Button, Input, Modal, Popconfirm, Select, Space, Table, Typography } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import {
-  useProducts,
+  useSearchProducts,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
@@ -13,20 +13,51 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import ProductForm from '../../components/forms/ProductForm';
 import { formatCurrency } from '../../utils/formatters';
-import type { Product, CreateProductDto } from '../../types';
+import type { Product, CreateProductDto, ProductSearchParams } from '../../types';
 
 const { Title } = Typography;
+const DEFAULT_PAGE_SIZE = 10;
 
 const Products = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
+  const [inputValue, setInputValue] = useState('');
+  const [searchParams, setSearchParams] = useState<ProductSearchParams>({
+    page: 0,
+    size: DEFAULT_PAGE_SIZE,
+    sort: 'createdAt',
+    direction: 'DESC',
+  });
 
-  const { data: products, isLoading, error } = useProducts(selectedCategoryId);
+  const { data: pageData, isLoading, error } = useSearchProducts(searchParams);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
+
+  const handleSearch = () => {
+    setSearchParams((prev) => ({
+      ...prev,
+      name: inputValue.trim() || undefined,
+      page: 0,
+    }));
+  };
+
+  const handleCategoryFilter = (categoryId: number | undefined) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      categoryId,
+      page: 0,
+    }));
+  };
+
+  const handleTableChange = (pagination: TablePaginationConfig) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      page: (pagination.current ?? 1) - 1,
+      size: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+    }));
+  };
 
   const handleOpenCreate = () => {
     setEditingProduct(null);
@@ -52,10 +83,6 @@ const Products = () => {
     } else {
       createProduct.mutate(values, { onSuccess: handleCloseModal });
     }
-  };
-
-  const handleDelete = (id: number) => {
-    deleteProduct.mutate(id);
   };
 
   const isSubmitting = createProduct.isPending || updateProduct.isPending;
@@ -111,7 +138,7 @@ const Products = () => {
             cancelText="Hủy"
             okButtonProps={{ danger: true, size: 'large' }}
             cancelButtonProps={{ size: 'large' }}
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => deleteProduct.mutate(record.id)}
           >
             <Button type="link" danger icon={<DeleteOutlined />} size="large">
               Xóa
@@ -121,10 +148,6 @@ const Products = () => {
       ),
     },
   ];
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
 
   if (error) {
     return (
@@ -158,26 +181,55 @@ const Products = () => {
         </Button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      {/* Search + filter */}
+      <Space wrap style={{ marginBottom: 16 }}>
+        <Input
+          placeholder="Tìm theo tên sản phẩm..."
+          prefix={<SearchOutlined />}
+          size="large"
+          allowClear
+          style={{ width: 280 }}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onPressEnter={handleSearch}
+        />
+        <Button
+          type="primary"
+          icon={<SearchOutlined />}
+          size="large"
+          onClick={handleSearch}
+        >
+          Tìm kiếm
+        </Button>
         <Select
           placeholder="Lọc theo danh mục"
           size="large"
           allowClear
           loading={categoriesLoading}
-          style={{ width: 240 }}
+          style={{ width: 220 }}
           options={categories?.map((c) => ({ value: c.id, label: c.name }))}
-          onChange={(value) => setSelectedCategoryId(value)}
+          onChange={handleCategoryFilter}
         />
-      </div>
+      </Space>
 
       <Table<Product>
-        dataSource={products ?? []}
+        dataSource={pageData?.content ?? []}
         columns={columns}
         rowKey="id"
-        pagination={{ pageSize: 20 }}
+        loading={isLoading}
         size="middle"
         style={{ fontSize: 16 }}
         locale={{ emptyText: 'Chưa có sản phẩm nào' }}
+        pagination={{
+          current: (searchParams.page ?? 0) + 1,
+          pageSize: searchParams.size ?? DEFAULT_PAGE_SIZE,
+          total: pageData?.totalElements ?? 0,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) => `${range[0]}–${range[1]} / ${total} bản ghi`,
+        }}
+        onChange={handleTableChange}
       />
 
       <Modal

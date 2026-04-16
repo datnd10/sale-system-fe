@@ -5,8 +5,8 @@ export const getPayments = (filters?: PaymentFilters): Promise<Payment[]> => {
   const params: Record<string, string> = {};
   if (filters?.from) params.from = filters.from;
   if (filters?.to) params.to = filters.to;
-  return apiClient.get('/api/payments', { params }).then(res => res.data);
+  return apiClient.get('/api/payments', { params });
 };
 
 export const createPayment = (data: CreatePaymentDto): Promise<Payment> =>
-  apiClient.post('/api/payments', data).then(res => res.data);
+  apiClient.post('/api/payments', data);

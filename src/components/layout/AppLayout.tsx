@@ -6,17 +6,15 @@ const { Sider, Content } = Layout;
 
 const AppLayout = () => {
   return (
-    <Layout style={{ minHeight: '100vh', fontSize: 16 }}>
+    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
       <Sider
         width={220}
         style={{
           background: '#fff',
           borderRight: '1px solid #f0f0f0',
-          position: 'fixed',
           height: '100vh',
-          left: 0,
-          top: 0,
-          overflow: 'auto',
+          overflow: 'hidden',
+          flexShrink: 0,
         }}
       >
         <div
@@ -30,7 +28,7 @@ const AppLayout = () => {
             borderBottom: '1px solid #f0f0f0',
             padding: '0 16px',
             whiteSpace: 'nowrap',
-            overflow: 'hidden',
+            flexShrink: 0,
           }}
         >
           🏗️ Vật liệu XD
@@ -38,11 +36,12 @@ const AppLayout = () => {
         <SidebarNav />
       </Sider>
 
-      <Layout style={{ marginLeft: 220 }}>
+      <Layout style={{ overflow: 'hidden' }}>
         <Content
           style={{
+            height: '100vh',
+            overflowY: 'auto',
             padding: 24,
-            minHeight: '100vh',
             background: '#f5f5f5',
             fontSize: 16,
           }}

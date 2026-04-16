@@ -1,28 +1,51 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, Space, Table, Tag, Typography } from 'antd';
-import { PlusOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import { Button, Input, Modal, Space, Table, Tag, Typography } from 'antd';
+import { PlusOutlined, EditOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import {
-  useCustomers,
+  useSearchCustomers,
   useCreateCustomer,
   useUpdateCustomer,
 } from '../../hooks/useCustomers';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import CustomerForm from '../../components/forms/CustomerForm';
-import type { Customer, CreateCustomerDto } from '../../types';
+import type { Customer, CreateCustomerDto, CustomerSearchParams } from '../../types';
 
 const { Title } = Typography;
+const DEFAULT_PAGE_SIZE = 10;
 
 const Customers = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [inputValue, setInputValue] = useState('');
+  const [searchParams, setSearchParams] = useState<CustomerSearchParams>({
+    page: 0,
+    size: DEFAULT_PAGE_SIZE,
+    sort: 'createdAt',
+    direction: 'DESC',
+  });
 
-  const { data: customers, isLoading, error } = useCustomers();
+  const { data: pageData, isLoading, error } = useSearchCustomers(searchParams);
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer();
+
+  const handleSearch = () => {
+    setSearchParams((prev) => ({
+      ...prev,
+      name: inputValue.trim() || undefined,
+      page: 0,
+    }));
+  };
+
+  const handleTableChange = (pagination: TablePaginationConfig) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      page: (pagination.current ?? 1) - 1,
+      size: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+    }));
+  };
 
   const handleOpenCreate = () => {
     setEditingCustomer(null);
@@ -83,13 +106,9 @@ const Customers = () => {
       width: 140,
       render: (hasDebt: boolean) =>
         hasDebt ? (
-          <Tag color="red" style={{ fontSize: 14 }}>
-            Đang nợ
-          </Tag>
+          <Tag color="red" style={{ fontSize: 14 }}>Đang nợ</Tag>
         ) : (
-          <Tag color="green" style={{ fontSize: 14 }}>
-            Không nợ
-          </Tag>
+          <Tag color="green" style={{ fontSize: 14 }}>Không nợ</Tag>
         ),
     },
     {
@@ -118,10 +137,6 @@ const Customers = () => {
       ),
     },
   ];
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
 
   if (error) {
     return (
@@ -155,14 +170,46 @@ const Customers = () => {
         </Button>
       </div>
 
+      {/* Search bar */}
+      <Space style={{ marginBottom: 16 }}>
+        <Input
+          placeholder="Tìm theo tên khách hàng..."
+          prefix={<SearchOutlined />}
+          size="large"
+          allowClear
+          style={{ width: 300 }}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onPressEnter={handleSearch}
+        />
+        <Button
+          type="primary"
+          icon={<SearchOutlined />}
+          size="large"
+          onClick={handleSearch}
+        >
+          Tìm kiếm
+        </Button>
+      </Space>
+
       <Table<Customer>
-        dataSource={customers ?? []}
+        dataSource={pageData?.content ?? []}
         columns={columns}
         rowKey="id"
-        pagination={{ pageSize: 20 }}
+        loading={isLoading}
         size="middle"
         style={{ fontSize: 16 }}
-        locale={{ emptyText: 'Chưa có khách hàng nào' }}
+        locale={{ emptyText: searchParams.name ? 'Không tìm thấy khách hàng nào' : 'Chưa có khách hàng nào' }}
+        pagination={{
+          current: (searchParams.page ?? 0) + 1,
+          pageSize: searchParams.size ?? DEFAULT_PAGE_SIZE,
+          total: pageData?.totalElements ?? 0,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) => `${range[0]}–${range[1]} / ${total} bản ghi`,
+        }}
+        onChange={handleTableChange}
       />
 
       <Modal
@@ -174,7 +221,7 @@ const Customers = () => {
         open={isModalOpen}
         onCancel={handleCloseModal}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <CustomerForm
           key={editingCustomer?.id ?? 'new'}

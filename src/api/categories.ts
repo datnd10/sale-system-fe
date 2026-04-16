@@ -1,14 +1,17 @@
 import apiClient from './axios';
-import type { Category, CreateCategoryDto, UpdateCategoryDto } from '../types';
+import type { Category, CreateCategoryDto, UpdateCategoryDto, PageResponse, CategorySearchParams } from '../types';
 
 export const getCategories = (): Promise<Category[]> =>
-  apiClient.get('/api/categories').then(res => res.data);
+  apiClient.get('/api/categories');
+
+export const searchCategories = (params: CategorySearchParams): Promise<PageResponse<Category>> =>
+  apiClient.get('/api/categories/search', { params });
 
 export const createCategory = (data: CreateCategoryDto): Promise<Category> =>
-  apiClient.post('/api/categories', data).then(res => res.data);
+  apiClient.post('/api/categories', data);
 
 export const updateCategory = (id: number, data: UpdateCategoryDto): Promise<Category> =>
-  apiClient.put(`/api/categories/${id}`, data).then(res => res.data);
+  apiClient.put(`/api/categories/${id}`, data);
 
 export const deleteCategory = (id: number): Promise<void> =>
-  apiClient.delete(`/api/categories/${id}`).then(res => res.data);
+  apiClient.delete(`/api/categories/${id}`);

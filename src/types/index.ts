@@ -6,6 +6,38 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
+// Paginated response từ backend
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+// Search params dùng chung cho các search endpoint
+export interface SearchParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
+}
+
+export interface CategorySearchParams extends SearchParams {
+  name?: string;
+}
+
+export interface ProductSearchParams extends SearchParams {
+  name?: string;
+  categoryId?: number;
+}
+
+export interface CustomerSearchParams extends SearchParams {
+  name?: string;
+  phone?: string;
+}
+
 export interface Category {
   id: number;
   code: string; // DM0000001

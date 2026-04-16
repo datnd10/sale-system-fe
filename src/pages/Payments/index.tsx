@@ -7,6 +7,7 @@ import { usePayments, useCreatePayment } from '../../hooks/usePayments';
 import PaymentForm from '../../components/forms/PaymentForm';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
+import { defaultPagination } from '../../utils/tableConfig';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import type { Payment, PaymentFilters, CreatePaymentDto } from '../../types';
 
@@ -146,7 +147,7 @@ const Payments = () => {
         dataSource={paymentList}
         columns={columns}
         rowKey="id"
-        pagination={{ pageSize: 20 }}
+        pagination={defaultPagination}
         size="middle"
         style={{ fontSize: 16 }}
         locale={{ emptyText: 'Chưa có thanh toán nào' }}

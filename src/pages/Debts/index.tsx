@@ -6,6 +6,7 @@ import { useDebts } from '../../hooks/useDebts';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import EmptyState from '../../components/common/EmptyState';
+import { defaultPagination } from '../../utils/tableConfig';
 import { formatCurrency } from '../../utils/formatters';
 import type { DebtSummary } from '../../types';
 
@@ -101,7 +102,7 @@ const Debts = () => {
         dataSource={debtList}
         columns={columns}
         rowKey="customerId"
-        pagination={{ pageSize: 20 }}
+        pagination={defaultPagination}
         size="middle"
         style={{ fontSize: 16 }}
         summary={() => (
