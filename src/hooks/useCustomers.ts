@@ -20,7 +20,11 @@ export const useSearchCustomers = (params: CustomerSearchParams) =>
   });
 
 export const useCustomerById = (id: number) =>
-  useQuery({ queryKey: QUERY_KEYS.customer(id), queryFn: () => getCustomerById(id) });
+  useQuery({
+    queryKey: QUERY_KEYS.customer(id),
+    queryFn: () => getCustomerById(id),
+    enabled: !!id,
+  });
 
 export const useCreateCustomer = () => {
   const queryClient = useQueryClient();
@@ -32,7 +36,7 @@ export const useCreateCustomer = () => {
       notification.success({ message: 'Thêm khách hàng thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
@@ -49,7 +53,7 @@ export const useUpdateCustomer = () => {
       notification.success({ message: 'Cập nhật khách hàng thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };

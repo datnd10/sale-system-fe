@@ -19,7 +19,8 @@ const Customers = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [inputValue, setInputValue] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
   const [searchParams, setSearchParams] = useState<CustomerSearchParams>({
     page: 0,
     size: DEFAULT_PAGE_SIZE,
@@ -34,7 +35,8 @@ const Customers = () => {
   const handleSearch = () => {
     setSearchParams((prev) => ({
       ...prev,
-      name: inputValue.trim() || undefined,
+      name: nameInput.trim() || undefined,
+      phone: phoneInput.trim() || undefined,
       page: 0,
     }));
   };
@@ -170,16 +172,25 @@ const Customers = () => {
         </Button>
       </div>
 
-      {/* Search bar */}
-      <Space style={{ marginBottom: 16 }}>
+      <Space wrap style={{ marginBottom: 16 }}>
         <Input
           placeholder="Tìm theo tên khách hàng..."
           prefix={<SearchOutlined />}
           size="large"
           allowClear
-          style={{ width: 300 }}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          style={{ width: 260 }}
+          value={nameInput}
+          onChange={(e) => setNameInput(e.target.value)}
+          onPressEnter={handleSearch}
+        />
+        <Input
+          placeholder="Tìm theo số điện thoại..."
+          prefix={<SearchOutlined />}
+          size="large"
+          allowClear
+          style={{ width: 220 }}
+          value={phoneInput}
+          onChange={(e) => setPhoneInput(e.target.value)}
           onPressEnter={handleSearch}
         />
         <Button
@@ -199,7 +210,11 @@ const Customers = () => {
         loading={isLoading}
         size="middle"
         style={{ fontSize: 16 }}
-        locale={{ emptyText: searchParams.name ? 'Không tìm thấy khách hàng nào' : 'Chưa có khách hàng nào' }}
+        locale={{
+          emptyText: (searchParams.name || searchParams.phone)
+            ? 'Không tìm thấy khách hàng nào'
+            : 'Chưa có khách hàng nào',
+        }}
         pagination={{
           current: (searchParams.page ?? 0) + 1,
           pageSize: searchParams.size ?? DEFAULT_PAGE_SIZE,

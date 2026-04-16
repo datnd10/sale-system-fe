@@ -9,4 +9,5 @@ export const useDebtsByCustomer = (customerId: number) =>
   useQuery({
     queryKey: QUERY_KEYS.debtsByCustomer(customerId),
     queryFn: () => getDebtsByCustomer(customerId),
+    enabled: !!customerId,
   });

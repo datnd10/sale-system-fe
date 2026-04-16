@@ -32,7 +32,7 @@ export const useCreateProduct = () => {
       notification.success({ message: 'Thêm sản phẩm thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
@@ -48,7 +48,7 @@ export const useUpdateProduct = () => {
       notification.success({ message: 'Cập nhật sản phẩm thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
@@ -63,7 +63,7 @@ export const useDeleteProduct = () => {
       notification.success({ message: 'Xóa sản phẩm thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };

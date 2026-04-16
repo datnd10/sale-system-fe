@@ -7,9 +7,10 @@ import { useDebtsByCustomer } from '../../hooks/useDebts';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import { formatCurrency, formatDate, formatValue } from '../../utils/formatters';
+import { defaultPagination } from '../../utils/tableConfig';
 import type { Debt } from '../../types';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +24,7 @@ const CustomerDetail = () => {
   } = useCustomerById(customerId);
 
   const {
-    data: debts,
+    data: debtDetail,
     isLoading: isLoadingDebts,
     error: debtsError,
   } = useDebtsByCustomer(customerId);
@@ -31,33 +32,47 @@ const CustomerDetail = () => {
   const isLoading = isLoadingCustomer || isLoadingDebts;
   const error = customerError || debtsError;
 
-  const totalDebt = debts?.reduce((sum, d) => sum + d.remainingAmount, 0) ?? 0;
+  const debts = debtDetail?.debts ?? [];
+  const totalDebt = debtDetail?.totalRemaining ?? 0;
 
   const debtColumns: ColumnsType<Debt> = [
     {
       title: 'Mã nợ',
-      dataIndex: 'code',
-      key: 'code',
+      dataIndex: 'debtCode',
+      key: 'debtCode',
       width: 140,
     },
     {
       title: 'Mã đơn hàng',
-      dataIndex: 'orderCode',
       key: 'orderCode',
       width: 140,
+      render: (_, record) =>
+        record.orderId ? (
+          <Button
+            type="link"
+            style={{ padding: 0 }}
+            onClick={() => navigate(`/orders/${record.orderId}`)}
+          >
+            {record.orderCode}
+          </Button>
+        ) : (
+          <Text type="secondary">—</Text>
+        ),
     },
     {
       title: 'Số tiền gốc',
       dataIndex: 'originalAmount',
       key: 'originalAmount',
+      align: 'right',
       render: (amount: number) => formatCurrency(amount),
     },
     {
       title: 'Còn lại',
       dataIndex: 'remainingAmount',
       key: 'remainingAmount',
+      align: 'right',
       render: (amount: number) => (
-        <span style={{ color: amount > 0 ? '#cf1322' : 'inherit', fontWeight: amount > 0 ? 600 : 400 }}>
+        <span style={{ color: amount > 0 ? '#cf1322' : '#52c41a', fontWeight: 600 }}>
           {formatCurrency(amount)}
         </span>
       ),
@@ -66,13 +81,12 @@ const CustomerDetail = () => {
       title: 'Ngày tạo',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      width: 130,
       render: (date: string) => formatDate(date),
     },
   ];
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+  if (isLoading) return <LoadingSpinner />;
 
   if (error) {
     return (
@@ -95,11 +109,7 @@ const CustomerDetail = () => {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: 24 }}>
-        <Button
-          icon={<ArrowLeftOutlined />}
-          size="large"
-          onClick={() => navigate('/customers')}
-        >
+        <Button icon={<ArrowLeftOutlined />} size="large" onClick={() => navigate('/customers')}>
           Quay lại
         </Button>
       </div>
@@ -108,7 +118,6 @@ const CustomerDetail = () => {
         Chi tiết khách hàng
       </Title>
 
-      {/* Thông tin cơ bản */}
       <Card style={{ marginBottom: 24 }}>
         <Descriptions
           title={<span style={{ fontSize: 16, fontWeight: 600 }}>Thông tin khách hàng</span>}
@@ -120,50 +129,45 @@ const CustomerDetail = () => {
         >
           <Descriptions.Item label="Mã khách hàng">{customer.code}</Descriptions.Item>
           <Descriptions.Item label="Tên khách hàng">{customer.name}</Descriptions.Item>
-          <Descriptions.Item label="Số điện thoại">
-            {formatValue(customer.phone)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Địa chỉ">
-            {formatValue(customer.address)}
-          </Descriptions.Item>
+          <Descriptions.Item label="Số điện thoại">{formatValue(customer.phone)}</Descriptions.Item>
+          <Descriptions.Item label="Địa chỉ">{formatValue(customer.address)}</Descriptions.Item>
           <Descriptions.Item label="Tổng công nợ hiện tại" span={2}>
-            <span
+            <Text
               style={{
-                color: totalDebt > 0 ? '#cf1322' : 'inherit',
+                color: totalDebt > 0 ? '#cf1322' : '#52c41a',
                 fontWeight: 600,
                 fontSize: 16,
               }}
             >
               {formatCurrency(totalDebt)}
-            </span>
+            </Text>
           </Descriptions.Item>
         </Descriptions>
       </Card>
 
-      {/* Danh sách công nợ */}
       <Card>
         <Title level={4} style={{ marginBottom: 16 }}>
-          Danh sách công nợ theo đơn hàng
+          Chi tiết công nợ
         </Title>
         <Table<Debt>
-          dataSource={debts ?? []}
+          dataSource={debts}
           columns={debtColumns}
-          rowKey="id"
-          pagination={{ pageSize: 20 }}
+          rowKey="debtId"
+          pagination={defaultPagination}
           size="middle"
           style={{ fontSize: 16 }}
           locale={{ emptyText: 'Không có khoản nợ nào' }}
           summary={() => {
-            if (!debts || debts.length === 0) return null;
+            if (debts.length === 0) return null;
             return (
               <Table.Summary.Row>
                 <Table.Summary.Cell index={0} colSpan={3}>
-                  <strong>Tổng còn lại</strong>
+                  <Text strong>Tổng còn lại</Text>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={1}>
-                  <strong style={{ color: totalDebt > 0 ? '#cf1322' : 'inherit' }}>
+                <Table.Summary.Cell index={1} align="right">
+                  <Text strong style={{ color: totalDebt > 0 ? '#cf1322' : '#52c41a' }}>
                     {formatCurrency(totalDebt)}
-                  </strong>
+                  </Text>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={2} />
               </Table.Summary.Row>

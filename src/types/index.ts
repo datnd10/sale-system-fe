@@ -67,7 +67,7 @@ export interface Customer {
   phone?: string;
   address?: string;
   hasDebt: boolean;
-  totalDebt?: number; // chỉ có trong GET /customers/{id}
+  totalDebt?: number; // tổng nợ còn lại, có trong GET /customers/{id}
 }
 
 export interface Order {
@@ -99,16 +99,21 @@ export interface OrderItem {
 }
 
 export interface Debt {
-  id: number;
-  code: string; // CN0000001
-  customerId: number;
-  customerName: string;
-  customerPhone?: string;
-  orderId: number;
-  orderCode: string;
+  debtId: number;
+  debtCode: string;
+  orderId?: number;
+  orderCode?: string;
   originalAmount: number;
   remainingAmount: number;
   createdAt: string;
+}
+
+export interface CustomerDebtDetail {
+  customerId: number;
+  customerCode: string;
+  customerName: string;
+  totalRemaining: number;
+  debts: Debt[];
 }
 
 export interface Payment {

@@ -26,7 +26,7 @@ const CustomerForm = ({ initialValues, onFinish, isSubmitting }: CustomerFormPro
           {
             validator: (_, value) => {
               if (value && value.trim() === '') {
-                return Promise.reject(new Error('Tên khách hàng không được chỉ là khoảng trắng'));
+                return Promise.reject(new Error('Tên không được chỉ là khoảng trắng'));
               }
               return Promise.resolve();
             },
@@ -37,22 +37,12 @@ const CustomerForm = ({ initialValues, onFinish, isSubmitting }: CustomerFormPro
         <Input placeholder="Nhập tên khách hàng" size="large" />
       </Form.Item>
 
-      <Form.Item
-        label="Số điện thoại"
-        name="phone"
-      >
+      <Form.Item label="Số điện thoại" name="phone">
         <Input placeholder="Nhập số điện thoại (tùy chọn)" size="large" />
       </Form.Item>
 
-      <Form.Item
-        label="Địa chỉ"
-        name="address"
-      >
-        <Input.TextArea
-          placeholder="Nhập địa chỉ (tùy chọn)"
-          rows={3}
-          size="large"
-        />
+      <Form.Item label="Địa chỉ" name="address">
+        <Input.TextArea placeholder="Nhập địa chỉ (tùy chọn)" rows={2} size="large" />
       </Form.Item>
 
       <Form.Item>

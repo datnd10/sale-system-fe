@@ -21,7 +21,7 @@ export const useCreatePayment = () => {
       notification.success({ message: 'Ghi nhận thanh toán thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };

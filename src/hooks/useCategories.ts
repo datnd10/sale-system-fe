@@ -29,7 +29,7 @@ export const useCreateCategory = () => {
       notification.success({ message: 'Thêm danh mục thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
@@ -45,7 +45,7 @@ export const useUpdateCategory = () => {
       notification.success({ message: 'Cập nhật danh mục thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
@@ -60,7 +60,7 @@ export const useDeleteCategory = () => {
       notification.success({ message: 'Xóa danh mục thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };

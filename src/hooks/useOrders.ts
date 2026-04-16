@@ -17,7 +17,11 @@ export const useOrders = (filters?: OrderFilters) =>
   });
 
 export const useOrderById = (id: number) =>
-  useQuery({ queryKey: QUERY_KEYS.order(id), queryFn: () => getOrderById(id) });
+  useQuery({
+    queryKey: QUERY_KEYS.order(id),
+    queryFn: () => getOrderById(id),
+    enabled: !!id,
+  });
 
 export const useCreateOrder = () => {
   const queryClient = useQueryClient();
@@ -28,7 +32,7 @@ export const useCreateOrder = () => {
       notification.success({ message: 'Tạo đơn hàng thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
@@ -42,7 +46,7 @@ export const useDeleteOrder = () => {
       notification.success({ message: 'Xóa đơn hàng thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
@@ -56,7 +60,7 @@ export const useUpdateOrderNote = () => {
       notification.success({ message: 'Cập nhật ghi chú thành công' });
     },
     onError: (error: Error) => {
-      notification.error({ message: error.message });
+      notification.error({ message: 'Lỗi', description: error.message });
     },
   });
 };
