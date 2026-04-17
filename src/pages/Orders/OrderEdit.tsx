@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Button, Card, Col, DatePicker, Divider, Form,
-  Input, InputNumber, Row, Select, Spin, Typography,
+  Input, InputNumber, Modal, Row, Select, Spin, Typography,
 } from 'antd';
 import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -12,7 +13,7 @@ import OrderItemRow from '../../components/forms/OrderItemRow';
 import { formatCurrency } from '../../utils/formatters';
 import type { CreateOrderDto, CreateOrderItemDto } from '../../types';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 interface OrderFormValues {
   customerId: number;
@@ -27,6 +28,7 @@ const OrderEdit = () => {
   const orderId = Number(id);
   const navigate = useNavigate();
   const [form] = Form.useForm<OrderFormValues>();
+  const [pendingDto, setPendingDto] = useState<CreateOrderDto | null>(null);
 
   const { data: order, isLoading: orderLoading } = useOrderById(orderId);
   const { data: customers, isLoading: customersLoading } = useCustomers();
@@ -71,16 +73,20 @@ const OrderEdit = () => {
         unitPrice: item.unitPrice,
       })),
     };
+    setPendingDto(dto);
+  };
 
-    updateOrder.mutate({ id: orderId, data: dto }, {
-      onSuccess: () => navigate(`/orders/${orderId}`),
+  const handleConfirm = () => {
+    if (!pendingDto) return;
+    updateOrder.mutate({ id: orderId, data: pendingDto }, {
+      onSuccess: () => { setPendingDto(null); navigate(`/orders/${orderId}`); },
+      onError: () => { setPendingDto(null); },
     });
   };
 
   if (orderLoading) return <Spin size="large" style={{ display: 'block', margin: '48px auto' }} />;
   if (!order) return null;
 
-  // Build initial values from existing order
   const initialValues: OrderFormValues = {
     customerId: order.customerId,
     orderDate: dayjs(order.orderDate),
@@ -165,8 +171,8 @@ const OrderEdit = () => {
           <Row gutter={[16, 0]} align="middle">
             <Col xs={24} sm={12}>
               <div style={{ marginBottom: 16 }}>
-                <Typography.Text style={{ fontSize: 16 }}>Tổng tiền đơn hàng: </Typography.Text>
-                <Typography.Text strong style={{ fontSize: 20, color: '#1677ff' }}>{formatCurrency(totalAmount)}</Typography.Text>
+                <Text style={{ fontSize: 16 }}>Tổng tiền đơn hàng: </Text>
+                <Text strong style={{ fontSize: 20, color: '#1677ff' }}>{formatCurrency(totalAmount)}</Text>
               </div>
               <Form.Item
                 label="Thanh toán ngay"
@@ -189,10 +195,10 @@ const OrderEdit = () => {
             <Col xs={24} sm={12}>
               <div style={{ textAlign: 'right' }}>
                 <div>
-                  <Typography.Text style={{ fontSize: 17 }}>Tổng nợ: </Typography.Text>
-                  <Typography.Text strong style={{ fontSize: 20, color: remainingThisOrder > 0 ? '#ff4d4f' : '#52c41a' }}>
+                  <Text style={{ fontSize: 17 }}>Tổng nợ: </Text>
+                  <Text strong style={{ fontSize: 20, color: remainingThisOrder > 0 ? '#ff4d4f' : '#52c41a' }}>
                     {formatCurrency(remainingThisOrder)}
-                  </Typography.Text>
+                  </Text>
                 </div>
               </div>
             </Col>
@@ -206,6 +212,35 @@ const OrderEdit = () => {
           </div>
         </Card>
       </Form>
+
+      {/* Confirm modal */}
+      <Modal
+        open={!!pendingDto}
+        title={<span style={{ fontSize: 18 }}>Xác nhận lưu thay đổi</span>}
+        onOk={handleConfirm}
+        onCancel={() => setPendingDto(null)}
+        okText="Xác nhận lưu"
+        cancelText="Quay lại"
+        okButtonProps={{ size: 'large', loading: updateOrder.isPending }}
+        cancelButtonProps={{ size: 'large' }}
+      >
+        <div style={{ fontSize: 16, lineHeight: 2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Text>Tổng tiền đơn hàng:</Text>
+            <Text strong style={{ color: '#1677ff' }}>{formatCurrency(totalAmount)}</Text>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Text>Thanh toán ngay:</Text>
+            <Text strong style={{ color: '#52c41a' }}>{formatCurrency(pendingDto?.paidImmediately ?? 0)}</Text>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Text>Còn nợ:</Text>
+            <Text strong style={{ color: remainingThisOrder > 0 ? '#ff4d4f' : '#52c41a' }}>
+              {formatCurrency(remainingThisOrder)}
+            </Text>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

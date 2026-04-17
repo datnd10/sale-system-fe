@@ -3,6 +3,7 @@ import { notification } from 'antd';
 import { QUERY_KEYS } from '../utils/queryKeys';
 import {
   getOrders,
+  searchOrders,
   getOrderById,
   createOrder,
   deleteOrder,
@@ -10,10 +11,17 @@ import {
   updateOrder,
 } from '../api/orders';
 import type { CreateOrderDto, OrderFilters } from '../types';
+
 export const useOrders = (filters?: OrderFilters) =>
   useQuery({
     queryKey: QUERY_KEYS.orders(filters),
     queryFn: () => getOrders(filters),
+  });
+
+export const useSearchOrders = (filters: OrderFilters) =>
+  useQuery({
+    queryKey: QUERY_KEYS.ordersSearch(filters),
+    queryFn: () => searchOrders(filters),
   });
 
 export const useOrderById = (id: number) =>
@@ -28,7 +36,7 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: (data: CreateOrderDto) => createOrder(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.orders() });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       notification.success({ message: 'Tạo đơn hàng thành công' });
     },
     onError: (error: Error) => {

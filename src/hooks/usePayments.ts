@@ -1,13 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notification } from 'antd';
 import { QUERY_KEYS } from '../utils/queryKeys';
-import { getPayments, createPayment } from '../api/payments';
+import { getPayments, searchPayments, createPayment } from '../api/payments';
 import type { PaymentFilters } from '../types';
 
 export const usePayments = (filters?: PaymentFilters) =>
   useQuery({
     queryKey: QUERY_KEYS.payments(filters),
     queryFn: () => getPayments(filters),
+  });
+
+export const useSearchPayments = (filters: PaymentFilters) =>
+  useQuery({
+    queryKey: QUERY_KEYS.paymentsSearch(filters),
+    queryFn: () => searchPayments(filters),
   });
 
 export const useCreatePayment = () => {

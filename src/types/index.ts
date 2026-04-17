@@ -102,6 +102,7 @@ export interface OrderItem {
   productId: number;
   productName: string;
   productCode: string;
+  productUnit: string; // enum key: KG, TAN, CAY, MET, CAI, M2
   unit: string;
   count: number;
   length?: number;
@@ -229,9 +230,26 @@ export interface OrderFilters {
   customerId?: number;
   from?: string;
   to?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
 }
 
 export interface PaymentFilters {
   from?: string;
   to?: string;
+  customerName?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
+}
+
+export interface DebtFilters {
+  customerName?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
 }

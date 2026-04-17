@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Button,
@@ -12,12 +12,15 @@ import {
   Table,
   Typography,
 } from 'antd';
-import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, PrinterOutlined, SaveOutlined } from '@ant-design/icons';
+import { useReactToPrint } from 'react-to-print';
 import type { ColumnsType } from 'antd/es/table';
 import { useOrderById, useDeleteOrder, useUpdateOrderNote } from '../../hooks/useOrders';
+import { useCustomerById } from '../../hooks/useCustomers';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import { formatCurrency, formatDate, formatValue } from '../../utils/formatters';
+import OrderPrint from '../../components/print/OrderPrint';
 import type { OrderItem } from '../../types';
 
 const { Title, Text } = Typography;
@@ -28,8 +31,15 @@ const OrderDetail = () => {
   const orderId = Number(id);
 
   const { data: order, isLoading, error } = useOrderById(orderId);
+  const { data: customer } = useCustomerById(order?.customerId ?? 0);
   const deleteOrder = useDeleteOrder();
   const updateNote = useUpdateOrderNote();
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Hoa-don-${order?.code ?? ''}`,
+  });
 
   const [noteValue, setNoteValue] = useState<string | undefined>(undefined);
   const isEditingNote = noteValue !== undefined;
@@ -66,8 +76,8 @@ const OrderDetail = () => {
     },
     {
       title: 'Đơn vị',
-      dataIndex: 'unit',
-      key: 'unit',
+      dataIndex: 'productUnit',
+      key: 'productUnit',
       width: 90,
     },
     {
@@ -153,6 +163,13 @@ const OrderDetail = () => {
             onClick={() => navigate(`/orders/${orderId}/edit`)}
           >
             Sửa đơn
+          </Button>
+          <Button
+            icon={<PrinterOutlined />}
+            size="large"
+            onClick={() => handlePrint()}
+          >
+            In hóa đơn
           </Button>
           <Popconfirm
             title="Xóa đơn hàng"
@@ -275,6 +292,17 @@ const OrderDetail = () => {
           )}
         />
       </Card>
+      {/* Hidden print area */}
+      <div style={{ display: 'none' }}>
+        <div id="order-print-area" ref={printRef}>
+          <OrderPrint
+            order={order}
+            items={order.items ?? []}
+            customerPhone={customer?.phone}
+            customerAddress={customer?.address}
+          />
+        </div>
+      </div>
     </div>
   );
 };

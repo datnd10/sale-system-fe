@@ -2,45 +2,57 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, DatePicker, Select, Space, Table, Typography } from 'antd';
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useOrders } from '../../hooks/useOrders';
+import { useSearchOrders } from '../../hooks/useOrders';
 import { useCustomers } from '../../hooks/useCustomers';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
-import { defaultPagination } from '../../utils/tableConfig';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import type { Order, OrderFilters } from '../../types';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
+const DEFAULT_PAGE_SIZE = 10;
 
 const Orders = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<OrderFilters>({});
+  const [filters, setFilters] = useState<OrderFilters>({
+    page: 0,
+    size: DEFAULT_PAGE_SIZE,
+    sort: 'orderDate',
+    direction: 'DESC',
+  });
 
-  const { data: orders, isLoading, error } = useOrders(filters);
+  const { data: pageData, isLoading, error } = useSearchOrders(filters);
   const { data: customers, isLoading: customersLoading } = useCustomers();
 
   const handleCustomerChange = (customerId: number | undefined) => {
-    setFilters((prev) => ({ ...prev, customerId }));
+    setFilters((prev) => ({ ...prev, customerId, page: 0 }));
   };
 
-  const handleDateRangeChange = (
-    dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null,
-  ) => {
+  const handleDateRangeChange = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
     if (dates && dates[0] && dates[1]) {
       setFilters((prev) => ({
         ...prev,
         from: dates[0]!.format('YYYY-MM-DD'),
         to: dates[1]!.format('YYYY-MM-DD'),
+        page: 0,
       }));
     } else {
       setFilters((prev) => {
         const { from: _f, to: _t, ...rest } = prev;
-        return rest;
+        return { ...rest, page: 0 };
       });
     }
+  };
+
+  const handleTableChange = (pagination: TablePaginationConfig) => {
+    setFilters((prev) => ({
+      ...prev,
+      page: (pagination.current ?? 1) - 1,
+      size: pagination.pageSize ?? DEFAULT_PAGE_SIZE,
+    }));
   };
 
   const columns: ColumnsType<Order> = [
@@ -97,10 +109,6 @@ const Orders = () => {
     },
   ];
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
   if (error) {
     return (
       <ErrorMessage
@@ -112,28 +120,13 @@ const Orders = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-        }}
-      >
-        <Title level={2} style={{ margin: 0 }}>
-          Đơn hàng
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          size="large"
-          onClick={() => navigate('/orders/new')}
-        >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <Title level={2} style={{ margin: 0 }}>Đơn hàng</Title>
+        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/orders/new')}>
           Tạo đơn hàng
         </Button>
       </div>
 
-      {/* Filters */}
       <Space wrap style={{ marginBottom: 16 }}>
         <Select
           placeholder="Lọc theo khách hàng"
@@ -155,13 +148,23 @@ const Orders = () => {
       </Space>
 
       <Table<Order>
-        dataSource={orders ?? []}
+        dataSource={pageData?.content ?? []}
         columns={columns}
         rowKey="id"
-        pagination={defaultPagination}
+        loading={isLoading}
         size="middle"
         style={{ fontSize: 16 }}
         locale={{ emptyText: 'Chưa có đơn hàng nào' }}
+        pagination={{
+          current: (filters.page ?? 0) + 1,
+          pageSize: filters.size ?? DEFAULT_PAGE_SIZE,
+          total: pageData?.totalElements ?? 0,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) => `${range[0]}–${range[1]} / ${total} bản ghi`,
+        }}
+        onChange={handleTableChange}
       />
     </div>
   );
