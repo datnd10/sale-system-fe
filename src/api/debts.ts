@@ -1,10 +1,10 @@
 import apiClient from './axios';
-import type { DebtSummary, CustomerDebtDetail, DebtFilters, PageResponse } from '../types';
+import type { DebtSummaryPaged, CustomerDebtDetail, DebtFilters, PageResponse } from '../types';
 
-export const getDebts = (): Promise<DebtSummary[]> =>
+export const getDebts = (): Promise<DebtSummaryPaged[]> =>
   apiClient.get('/api/debts');
 
-export const searchDebts = (filters: DebtFilters): Promise<PageResponse<DebtSummary>> => {
+export const searchDebts = (filters: DebtFilters): Promise<PageResponse<DebtSummaryPaged>> => {
   const params: Record<string, string | number> = {
     page: filters.page ?? 0,
     size: filters.size ?? 10,

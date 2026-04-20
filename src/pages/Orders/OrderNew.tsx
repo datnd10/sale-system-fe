@@ -51,7 +51,11 @@ const OrderNew = () => {
 
   const paidWatch: number = Number(Form.useWatch('paidImmediately', form)) || 0;
   const remainingThisOrder = Math.max(0, totalAmount - paidWatch);
+  // Phần trả vượt quá đơn này sẽ trừ vào nợ cũ
+  const extraPayment = Math.max(0, paidWatch - totalAmount);
   const oldDebt = Number(selectedCustomer?.totalDebt) || 0;
+  const remainingOldDebt = Math.max(0, oldDebt - extraPayment);
+  const totalDebtAfter = remainingThisOrder + remainingOldDebt;
 
   const handleProductChange = (index: number, _productId: number, unitPrice: number, width?: number) => {
     const currentItems = form.getFieldValue('items') as CreateOrderItemDto[];
@@ -162,11 +166,12 @@ const OrderNew = () => {
               <Form.Item
                 label="Thanh toán ngay"
                 name="paidImmediately"
+                // extra={oldDebt > 0 ? `Có thể trả thêm nợ cũ, tối đa ${formatCurrency(totalAmount + oldDebt)}` : undefined}
                 rules={[{
                   validator: (_, value) => {
                     const paid = value ?? 0;
                     if (paid < 0) return Promise.reject(new Error('Số tiền không được âm'));
-                    if (paid > totalAmount) return Promise.reject(new Error('Không được vượt quá tổng tiền'));
+                    if (paid > totalAmount + oldDebt) return Promise.reject(new Error(`Không được vượt quá tổng tiền + nợ cũ (${formatCurrency(totalAmount + oldDebt)})`));
                     return Promise.resolve();
                   },
                 }]}
@@ -176,7 +181,6 @@ const OrderNew = () => {
                   placeholder="0"
                   size="large"
                   min={0}
-                  max={totalAmount}
                   style={{ width: '100%' }}
                   suffix="₫"
                   formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''}
@@ -191,16 +195,15 @@ const OrderNew = () => {
                 {selectedCustomerId && (
                   <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px dashed #f0f0f0' }}>
                     <Text style={{ fontSize: 16 }}>Nợ cũ còn lại: </Text>
-                    <Text strong style={{ fontSize: 18, color: oldDebt > 0 ? '#cf1322' : '#52c41a' }}>
-                      {formatCurrency(oldDebt)}
+                    <Text strong style={{ fontSize: 18, color: remainingOldDebt > 0 ? '#cf1322' : '#52c41a' }}>
+                      {formatCurrency(remainingOldDebt)}
                     </Text>
                   </div>
                 )}
-                {/* Tổng nợ sau đơn này */}
                 <div>
                   <Text style={{ fontSize: 17 }}>Tổng nợ: </Text>
-                  <Text strong style={{ fontSize: 20, color: (remainingThisOrder + oldDebt) > 0 ? '#ff4d4f' : '#52c41a' }}>
-                    {formatCurrency(remainingThisOrder + oldDebt)}
+                  <Text strong style={{ fontSize: 20, color: totalDebtAfter > 0 ? '#ff4d4f' : '#52c41a' }}>
+                    {formatCurrency(totalDebtAfter)}
                   </Text>
                 </div>
               </div>
@@ -247,11 +250,11 @@ const OrderNew = () => {
               <Divider style={{ margin: '8px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Text>Nợ cũ còn lại:</Text>
-                <Text strong style={{ color: '#cf1322' }}>{formatCurrency(oldDebt)}</Text>
+                <Text strong style={{ color: remainingOldDebt > 0 ? '#cf1322' : '#52c41a' }}>{formatCurrency(remainingOldDebt)}</Text>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Text strong>Tổng nợ sau đơn:</Text>
-                <Text strong style={{ fontSize: 18, color: '#cf1322' }}>{formatCurrency(remainingThisOrder + oldDebt)}</Text>
+                <Text strong style={{ fontSize: 18, color: totalDebtAfter > 0 ? '#cf1322' : '#52c41a' }}>{formatCurrency(totalDebtAfter)}</Text>
               </div>
             </>
           )}

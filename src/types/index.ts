@@ -153,12 +153,27 @@ export interface MonthlyRevenue {
   revenue: number;
 }
 
+// Response từ /api/statistics/debts
 export interface DebtSummary {
   customerId: number;
   customerCode: string;
   customerName: string;
+  remainingDebt: number; // field từ /api/statistics/debts
+}
+
+// Response từ /api/debts/search (phân trang)
+export interface DebtSummaryPaged {
+  customerId: number;
+  customerCode: string;
+  customerName: string;
   customerPhone?: string;
-  totalRemaining: number; // field từ BE: totalRemaining
+  totalRemaining: number;
+}
+
+// Response từ /api/statistics/revenue/monthly
+export interface MonthlyRevenueResponse {
+  year: number;
+  monthlyRevenue: number[]; // 12 phần tử, index 0 = tháng 1
 }
 
 // DTOs

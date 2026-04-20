@@ -7,9 +7,10 @@ import './index.css';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 0,              // Luôn fetch mới khi vào page
+      gcTime: 1000 * 60 * 5,    // Giữ cache 5 phút để tránh flash khi navigate
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true, // Refetch khi focus lại tab
     },
     mutations: {
       retry: 0,

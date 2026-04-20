@@ -7,7 +7,7 @@ import { useSearchDebts } from '../../hooks/useDebts';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import EmptyState from '../../components/common/EmptyState';
 import { formatCurrency } from '../../utils/formatters';
-import type { DebtSummary, DebtFilters } from '../../types';
+import type { DebtSummaryPaged, DebtFilters } from '../../types';
 
 const { Title, Text } = Typography;
 const DEFAULT_PAGE_SIZE = 10;
@@ -36,7 +36,7 @@ const Debts = () => {
     }));
   };
 
-  const columns: ColumnsType<DebtSummary> = [
+  const columns: ColumnsType<DebtSummaryPaged> = [
     { title: 'Mã KH', dataIndex: 'customerCode', key: 'customerCode', width: 140 },
     { title: 'Tên khách hàng', dataIndex: 'customerName', key: 'customerName' },
     {
@@ -91,7 +91,7 @@ const Debts = () => {
       {!isLoading && debtList.length === 0 && !filters.customerName ? (
         <EmptyState description="Không có khách hàng nào đang nợ" />
       ) : (
-        <Table<DebtSummary>
+        <Table<DebtSummaryPaged>
           dataSource={debtList}
           columns={columns}
           rowKey="customerId"
