@@ -1,10 +1,20 @@
 import { Layout } from 'antd';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { Button } from 'antd';
+import { LogoutOutlined } from '@ant-design/icons';
 import SidebarNav from './SidebarNav';
+import { removeToken } from '../../utils/auth';
 
 const { Sider, Content } = Layout;
 
 const AppLayout = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    removeToken();
+    navigate('/login', { replace: true });
+  };
+
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
       <Sider
@@ -15,6 +25,8 @@ const AppLayout = () => {
           height: '100vh',
           overflow: 'hidden',
           flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <div
@@ -33,7 +45,19 @@ const AppLayout = () => {
         >
           🏗️ Vật liệu XD
         </div>
-        <SidebarNav />
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <SidebarNav />
+        </div>
+        <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0', flexShrink: 0 }}>
+          <Button
+            icon={<LogoutOutlined />}
+            size="large"
+            block
+            onClick={handleLogout}
+          >
+            Đăng xuất
+          </Button>
+        </div>
       </Sider>
 
       <Layout style={{ overflow: 'hidden' }}>
