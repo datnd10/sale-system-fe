@@ -1,5 +1,4 @@
 import { forwardRef } from 'react';
-import { formatCurrency, formatDate } from '../../utils/formatters';
 import { PRODUCT_UNIT_OPTIONS } from '../../types';
 import type { Order, OrderItem } from '../../types';
 
@@ -8,144 +7,183 @@ interface OrderPrintProps {
   items: OrderItem[];
   customerPhone?: string;
   customerAddress?: string;
+  /** Tổng nợ hiện tại của khách (sau đơn này) */
+  currentDebt?: number;
 }
 
 const SHOP_INFO = {
-  name: 'Đại Lý Thành Đạt',
+  name: 'Hộ kinh doanh Nguyễn Thị Thanh Nga',
   phone: '0904647794',
   address: 'Số 124, Đường Nguyễn Trực, Phú Lãm, Hà Đông, Hà Nội',
-  payment: 'Nguyễn Đắc Thành - STK: 0904647794 - MB Bank',
+  payment: 'HKD Nguyễn Thị Thanh Nga - STK: 2200235000747 - Agribank',
   products: 'Bán buôn, Bán lẻ, Tôn 3 Lớp, Tôn 1 Lớp, Panel, Sắt Hình Hộp, ...',
 };
 
+/** Format số không có ký hiệu tiền tệ, dùng dấu phẩy ngăn cách */
+const fmt = (n: number) =>
+  new Intl.NumberFormat('vi-VN').format(Math.round(n));
+
 const OrderPrint = forwardRef<HTMLDivElement, OrderPrintProps>(
-  ({ order, items, customerPhone, customerAddress }, ref) => {
+  ({ order, items, customerPhone, customerAddress, currentDebt }, ref) => {
     const totalAmount = order.totalAmount;
     const paidImmediately = order.paidImmediately;
-    const remaining = totalAmount - paidImmediately;
+
+    // Nợ cũ = nợ hiện tại + tiền đơn này - tiền đã trả ngay
+    // (vì currentDebt đã trừ paidImmediately rồi)
+    const debtFromThisOrder = totalAmount - paidImmediately;
+    const oldDebt = currentDebt !== undefined
+      ? currentDebt - debtFromThisOrder
+      : undefined;
+    const newDebt = currentDebt;
+
+    // Tổng số lượng (quantity) tất cả items
+    const totalQuantity = items.reduce((sum, item) => sum + Number(item.quantity || item.count || 0), 0);
+
+    const d = new Date(order.orderDate);
+    const dateStr = `Ngày ${d.getDate()} tháng ${d.getMonth() + 1} năm ${d.getFullYear()}`;
 
     return (
       <div
         ref={ref}
         style={{
           fontFamily: 'Arial, sans-serif',
-          fontSize: 13,
+          fontSize: 12,
           color: '#000',
-          padding: '16px 20px',
+          padding: '12px 16px',
           maxWidth: 680,
           margin: '0 auto',
           background: '#fff',
         }}
       >
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <div style={{ fontWeight: 700, fontSize: 18 }}>{SHOP_INFO.name}</div>
-          <div>Điện thoại: {SHOP_INFO.phone}</div>
-          <div>Địa chỉ: {SHOP_INFO.address}</div>
-          <div>Thông tin thanh toán: {SHOP_INFO.payment}</div>
-          <div>{SHOP_INFO.products}</div>
+        {/* ── HEADER ── */}
+        <div style={{ textAlign: 'center', marginBottom: 6 }}>
+          <div style={{ fontWeight: 700, fontSize: 16 }}>{SHOP_INFO.name}</div>
+          <div style={{ fontSize: 12 }}>Điện thoại: {SHOP_INFO.phone}</div>
+          <div style={{ fontSize: 12 }}>Địa chỉ: {SHOP_INFO.address}</div>
+          <div style={{ fontSize: 12 }}>
+            <strong>Thông tin thanh toán:</strong> {SHOP_INFO.payment}
+          </div>
+          <div style={{ fontSize: 12 }}>{SHOP_INFO.products}</div>
         </div>
 
-        <hr style={{ borderTop: '2px solid #000', margin: '8px 0' }} />
+        <hr style={{ borderTop: '2px solid #000', margin: '6px 0' }} />
 
-        {/* Invoice title + customer info */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        {/* ── TITLE + CUSTOMER INFO ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>
+            <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
               HÓA ĐƠN BÁN HÀNG
             </div>
             <div><strong>Khách hàng:</strong> {order.customerName}</div>
-            <div>
-              <strong>Ngày</strong>{' '}
-              {(() => {
-                const d = new Date(order.orderDate);
-                return `${d.getDate()} tháng ${d.getMonth() + 1} năm ${d.getFullYear()}`;
-              })()}
-            </div>
+            <div>{dateStr}</div>
             <div><strong>Điện thoại:</strong> {customerPhone ?? ''}</div>
             <div><strong>Địa chỉ:</strong> {customerAddress ?? ''}</div>
             <div><strong>Số phiếu:</strong> {order.code}</div>
           </div>
+          {/* QR thanh toán */}
+          <div style={{ flexShrink: 0, marginLeft: 12 }}>
+            <img
+              src="/qr.png"
+              alt="QR thanh toán"
+              style={{ width: 90, height: 90, display: 'block' }}
+            />
+          </div>
         </div>
 
-        <hr style={{ borderTop: '1px solid #000', margin: '8px 0' }} />
-
-        {/* Items table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        {/* ── ITEMS TABLE ── */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #000' }}>
-              <th style={{ textAlign: 'left', padding: '4px 4px', width: 24 }}>STT</th>
-              <th style={{ textAlign: 'left', padding: '4px 4px' }}>Tên hàng</th>
-              <th style={{ textAlign: 'center', padding: '4px 4px', width: 50 }}>ĐVT</th>
-              <th style={{ textAlign: 'center', padding: '4px 4px', width: 50 }}>SL</th>
-              <th style={{ textAlign: 'center', padding: '4px 4px', width: 60 }}>Dài</th>
-              <th style={{ textAlign: 'center', padding: '4px 4px', width: 60 }}>Rộng</th>
-              <th style={{ textAlign: 'right', padding: '4px 4px', width: 90 }}>Đơn giá</th>
-              <th style={{ textAlign: 'right', padding: '4px 4px', width: 100 }}>Thành tiền</th>
+            <tr style={{ background: '#f0f0f0' }}>
+              <th style={thStyle({ width: 28 })}>TT</th>
+              <th style={thStyle({})}>Tên hàng hóa</th>
+              <th style={thStyle({ width: 36 })}>ĐVT</th>
+              <th style={thStyle({ width: 40 })}>D</th>
+              <th style={thStyle({ width: 44 })}>T/C</th>
+              <th style={thStyle({ width: 40 })}>K</th>
+              <th style={thStyle({ width: 52 })}>SL</th>
+              <th style={thStyle({ width: 80, textAlign: 'right' })}>Đơn giá</th>
+              <th style={thStyle({ width: 90, textAlign: 'right' })}>Thành tiền</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, idx) => {
-              const unitLabel = PRODUCT_UNIT_OPTIONS.find((u) => u.value === item.productUnit)?.label ?? item.productUnit ?? item.unit;
+              const unitLabel = PRODUCT_UNIT_OPTIONS.find((u) => u.value === item.productUnit)?.label ?? item.productUnit;
               return (
                 <tr key={item.id} style={{ borderBottom: '1px dashed #ccc' }}>
-                  <td style={{ padding: '4px 4px' }}>{idx + 1}</td>
-                  <td style={{ padding: '4px 4px' }}>{item.productName}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 4px' }}>{unitLabel}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 4px' }}>{item.count}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 4px' }}>{item.length ?? '—'}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 4px' }}>{item.width ?? '—'}</td>
-                  <td style={{ textAlign: 'right', padding: '4px 4px' }}>{formatCurrency(item.unitPrice)}</td>
-                  <td style={{ textAlign: 'right', padding: '4px 4px' }}>{formatCurrency(item.subtotal)}</td>
+                  <td style={tdStyle({ textAlign: 'center' })}>{idx + 1}</td>
+                  <td style={tdStyle({})}>{item.productName}</td>
+                  <td style={tdStyle({ textAlign: 'center' })}>{unitLabel}</td>
+                  <td style={tdStyle({ textAlign: 'center' })}>{item.length ?? 0}</td>
+                  <td style={tdStyle({ textAlign: 'center' })}>{item.count}</td>
+                  <td style={tdStyle({ textAlign: 'center' })}>0</td>
+                  <td style={tdStyle({ textAlign: 'center' })}>
+                    {fmt(Number(item.quantity || item.count || 0))}
+                  </td>
+                  <td style={tdStyle({ textAlign: 'right' })}>{fmt(item.unitPrice)}</td>
+                  <td style={tdStyle({ textAlign: 'right' })}>{fmt(item.subtotal)}</td>
                 </tr>
               );
             })}
           </tbody>
           <tfoot>
-            <tr style={{ borderTop: '1px solid #000' }}>
-              <td colSpan={7} style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 700 }}>
-                Tổng tiền:
+            {/* Dòng tổng số lượng */}
+            <tr style={{ borderTop: '1px solid #000', background: '#f9f9f9' }}>
+              <td colSpan={5} style={tdStyle({ fontWeight: 700 })}>
+                Tổng số lượng: {order.note ?? ''}
               </td>
-              <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 700 }}>
-                {formatCurrency(totalAmount)}
+              <td style={tdStyle({ textAlign: 'center' })}></td>
+              <td style={tdStyle({ textAlign: 'center', fontWeight: 700 })}>
+                {fmt(totalQuantity)}
+              </td>
+              <td style={tdStyle({})}></td>
+              <td style={tdStyle({ textAlign: 'right', fontWeight: 700 })}>
+                {fmt(totalAmount)}
               </td>
             </tr>
-            {paidImmediately > 0 && (
-              <tr>
-                <td colSpan={7} style={{ textAlign: 'right', padding: '2px 4px' }}>
-                  Đã thanh toán:
-                </td>
-                <td style={{ textAlign: 'right', padding: '2px 4px' }}>
-                  {formatCurrency(paidImmediately)}
-                </td>
-              </tr>
-            )}
-            {remaining > 0 && (
-              <tr>
-                <td colSpan={7} style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 700, color: '#c00' }}>
-                  Còn nợ:
-                </td>
-                <td style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 700, color: '#c00' }}>
-                  {formatCurrency(remaining)}
-                </td>
-              </tr>
-            )}
           </tfoot>
+        </table>
+
+        {/* ── SUMMARY ── */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 2 }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: '2px 4px', width: '60%' }}>Tổng cộng tiền hàng:</td>
+              <td style={{ padding: '2px 4px', textAlign: 'right', fontWeight: 600 }}>
+                {fmt(totalAmount)}
+              </td>
+            </tr>
+            {oldDebt !== undefined && oldDebt > 0 && (
+              <tr>
+                <td style={{ padding: '2px 4px' }}>Nợ cũ:</td>
+                <td style={{ padding: '2px 4px', textAlign: 'right' }}>{fmt(oldDebt)}</td>
+              </tr>
+            )}
+            <tr>
+              <td style={{ padding: '2px 4px' }}>Khách đưa:</td>
+              <td style={{ padding: '2px 4px', textAlign: 'right' }}>{fmt(paidImmediately)}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '2px 4px', fontWeight: 600 }}>Nợ mới:</td>
+              <td style={{ padding: '2px 4px', textAlign: 'right', fontWeight: 600 }}>
+                {newDebt !== undefined ? fmt(newDebt) : fmt(totalAmount - paidImmediately)}
+              </td>
+            </tr>
+          </tbody>
         </table>
 
         <hr style={{ borderTop: '1px solid #000', margin: '8px 0' }} />
 
-        {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 12 }}>
+        {/* ── FOOTER ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 12 }}>
           <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontWeight: 600 }}>Người mua hàng</div>
-            <div style={{ color: '#666', fontSize: 11 }}>(Ký, ghi rõ họ tên)</div>
-            <div style={{ marginTop: 40 }}></div>
+            <div style={{ fontWeight: 600 }}>Người mua</div>
+            <div style={{ color: '#555', fontSize: 10 }}>(Ký, họ tên)</div>
+            <div style={{ marginTop: 36 }}></div>
           </div>
           <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontWeight: 600 }}>Người bán hàng</div>
-            <div style={{ color: '#666', fontSize: 11 }}>(Ký, ghi rõ họ tên)</div>
-            <div style={{ marginTop: 40 }}></div>
+            <div style={{ fontWeight: 600 }}>Người bán</div>
+            <div style={{ color: '#555', fontSize: 10 }}>(Ký, đóng dấu, họ tên)</div>
+            <div style={{ marginTop: 36 }}></div>
           </div>
         </div>
 
@@ -155,13 +193,33 @@ const OrderPrint = forwardRef<HTMLDivElement, OrderPrintProps>(
             body * { visibility: hidden; }
             #order-print-area, #order-print-area * { visibility: visible; }
             #order-print-area { position: absolute; left: 0; top: 0; width: 100%; }
-            @page { margin: 10mm; size: A4; }
+            @page { margin: 8mm; size: A5 landscape; }
           }
         `}</style>
       </div>
     );
   }
 );
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function thStyle(extra: React.CSSProperties): React.CSSProperties {
+  return {
+    border: '1px solid #000',
+    padding: '3px 4px',
+    textAlign: 'center',
+    fontWeight: 700,
+    ...extra,
+  };
+}
+
+function tdStyle(extra: React.CSSProperties): React.CSSProperties {
+  return {
+    border: '1px solid #ccc',
+    padding: '3px 4px',
+    ...extra,
+  };
+}
 
 OrderPrint.displayName = 'OrderPrint';
 export default OrderPrint;

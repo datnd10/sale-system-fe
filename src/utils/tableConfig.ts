@@ -13,5 +13,5 @@ export const defaultPagination: TablePaginationConfig = {
   showQuickJumper: true,
   showTotal: (total, range) =>
     `${range[0]}–${range[1]} / ${total} bản ghi`,
-  size: 'default',
+  size: 'small' as const,
 };

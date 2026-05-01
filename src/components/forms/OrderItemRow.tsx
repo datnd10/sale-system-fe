@@ -14,7 +14,7 @@ interface OrderItemRowProps {
   onProductChange: (productId: number, unitPrice: number, width?: number) => void;
 }
 
-const OrderItemRow = ({ index, onRemove, values, onProductChange }: OrderItemRowProps) => {
+const OrderItemRow = ({ index, onRemove, onProductChange }: OrderItemRowProps) => {
   const { data: products, isLoading: productsLoading } = useProducts();
 
   // Watch từng field trong row để tính subtotal real-time

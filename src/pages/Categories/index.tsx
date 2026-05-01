@@ -2,13 +2,13 @@ import { useState, useRef } from 'react';
 import { Button, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { InputRef } from 'antd';
 import {
   useSearchCategories,
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
 } from '../../hooks/useCategories';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import CategoryForm from '../../components/forms/CategoryForm';
 import type { Category, CreateCategoryDto, CategorySearchParams } from '../../types';
@@ -26,7 +26,7 @@ const Categories = () => {
     sort: 'createdAt',
     direction: 'DESC',
   });
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<InputRef>(null);
 
   const { data: pageData, isLoading, error } = useSearchCategories(searchParams);
   const createCategory = useCreateCategory();

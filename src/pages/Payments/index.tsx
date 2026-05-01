@@ -1,19 +1,20 @@
 import { useState } from 'react';
-import { Button, DatePicker, Input, Modal, Space, Table, Typography } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { Button, DatePicker, Input, Space, Table, Typography } from 'antd';
+import { SearchOutlined, EyeOutlined } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useSearchPayments, useCreatePayment } from '../../hooks/usePayments';
-import PaymentForm from '../../components/forms/PaymentForm';
+import { useSearchPayments } from '../../hooks/usePayments';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import type { Payment, PaymentFilters, CreatePaymentDto } from '../../types';
+import type { Payment, PaymentFilters } from '../../types';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 const DEFAULT_PAGE_SIZE = 10;
 
 const Payments = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<PaymentFilters>({
     from: dayjs().startOf('month').format('YYYY-MM-DD'),
     to: dayjs().endOf('month').format('YYYY-MM-DD'),
@@ -23,10 +24,8 @@ const Payments = () => {
     direction: 'DESC',
   });
   const [nameInput, setNameInput] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: pageData, isLoading, error } = useSearchPayments(filters);
-  const createPaymentMutation = useCreatePayment();
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, customerName: nameInput.trim() || undefined, page: 0 }));
@@ -57,8 +56,19 @@ const Payments = () => {
     { title: 'Mã thanh toán', dataIndex: 'code', key: 'code', width: 160 },
     { title: 'Khách hàng', dataIndex: 'customerName', key: 'customerName' },
     {
+      title: 'Đơn hàng', key: 'orderCode', width: 140,
+      render: (_, record) =>
+        record.orderId ? (
+          <Button type="link" style={{ padding: 0 }} icon={<EyeOutlined />} onClick={() => navigate(`/orders/${record.orderId}`)}>
+            {record.orderCode}
+          </Button>
+        ) : '—',
+    },
+    {
       title: 'Số tiền', dataIndex: 'amount', key: 'amount', width: 180, align: 'right',
-      render: (amount: number) => formatCurrency(amount),
+      render: (amount: number) => (
+        <Text strong style={{ color: '#52c41a' }}>{formatCurrency(amount)}</Text>
+      ),
     },
     {
       title: 'Ngày thanh toán', dataIndex: 'paymentDate', key: 'paymentDate', width: 160,
@@ -76,9 +86,9 @@ const Payments = () => {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2} style={{ margin: 0 }}>Thanh toán</Title>
-        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setIsModalOpen(true)}>
-          Ghi nhận thanh toán
+        <Title level={2} style={{ margin: 0 }}>Lịch sử thanh toán</Title>
+        <Button type="primary" size="large" onClick={() => navigate('/orders/new')}>
+          + Ghi nhận trả nợ
         </Button>
       </div>
 
@@ -131,15 +141,6 @@ const Payments = () => {
         }}
         onChange={handleTableChange}
       />
-
-      <Modal title="Ghi nhận thanh toán" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null} destroyOnHidden>
-        <PaymentForm
-          onFinish={(values: CreatePaymentDto) => {
-            createPaymentMutation.mutate(values, { onSuccess: () => setIsModalOpen(false) });
-          }}
-          isSubmitting={createPaymentMutation.isPending}
-        />
-      </Modal>
     </div>
   );
 };

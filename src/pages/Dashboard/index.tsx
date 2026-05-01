@@ -109,7 +109,7 @@ const Dashboard = () => {
             <Card>
               <Statistic
                 title={<span style={{ fontSize: 16 }}>Tổng đã thu</span>}
-                value={stats?.totalPaid ?? 0}
+                value={stats?.totalCollected ?? 0}
                 prefix={<CheckCircleOutlined />}
                 formatter={(val) => formatCurrency(Number(val))}
                 styles={{ content: { fontSize: 22, fontWeight: 700, color: '#52c41a' } }}

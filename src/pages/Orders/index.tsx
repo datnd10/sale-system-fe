@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, DatePicker, Select, Space, Table, Typography } from 'antd';
+import { Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd';
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -9,11 +9,17 @@ import { useCustomers } from '../../hooks/useCustomers';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import type { Order, OrderFilters } from '../../types';
+import type { Order, OrderFilters, OrderType } from '../../types';
+import { ORDER_TYPE_LABELS } from '../../types';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 const DEFAULT_PAGE_SIZE = 10;
+
+const orderTypeColor: Record<OrderType, string> = {
+  SALE: 'blue',
+  PAYMENT: 'green',
+};
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -29,6 +35,10 @@ const Orders = () => {
 
   const handleCustomerChange = (customerId: number | undefined) => {
     setFilters((prev) => ({ ...prev, customerId, page: 0 }));
+  };
+
+  const handleOrderTypeChange = (orderType: OrderType | undefined) => {
+    setFilters((prev) => ({ ...prev, orderType, page: 0 }));
   };
 
   const handleDateRangeChange = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
@@ -56,53 +66,37 @@ const Orders = () => {
   };
 
   const columns: ColumnsType<Order> = [
+    { title: 'Mã đơn', dataIndex: 'code', key: 'code', width: 140 },
     {
-      title: 'Mã đơn',
-      dataIndex: 'code',
-      key: 'code',
-      width: 140,
+      title: 'Loại', dataIndex: 'orderType', key: 'orderType', width: 110,
+      render: (type: OrderType) => (
+        <Tag color={orderTypeColor[type]}>{ORDER_TYPE_LABELS[type]}</Tag>
+      ),
     },
+    { title: 'Khách hàng', dataIndex: 'customerName', key: 'customerName' },
     {
-      title: 'Khách hàng',
-      dataIndex: 'customerName',
-      key: 'customerName',
-    },
-    {
-      title: 'Ngày đặt',
-      dataIndex: 'orderDate',
-      key: 'orderDate',
-      width: 130,
+      title: 'Ngày', dataIndex: 'orderDate', key: 'orderDate', width: 120,
       render: (date: string) => formatDate(date),
     },
     {
-      title: 'Tổng tiền',
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      width: 160,
-      align: 'right',
-      render: (amount: number) => formatCurrency(amount),
-    },
-    {
-      title: 'Đã thanh toán',
-      dataIndex: 'paidImmediately',
-      key: 'paidImmediately',
-      width: 160,
-      align: 'right',
-      render: (amount: number) => (
-        <span style={{ color: '#52c41a' }}>{formatCurrency(amount)}</span>
+      title: 'Số tiền', dataIndex: 'totalAmount', key: 'totalAmount', width: 160, align: 'right',
+      render: (amount: number, record) => (
+        <span style={{ color: record.orderType === 'PAYMENT' ? '#52c41a' : undefined }}>
+          {formatCurrency(amount)}
+        </span>
       ),
     },
     {
-      title: 'Thao tác',
-      key: 'actions',
-      width: 130,
+      title: 'Đã trả ngay', dataIndex: 'paidImmediately', key: 'paidImmediately', width: 150, align: 'right',
+      render: (amount: number, record) =>
+        record.orderType === 'SALE'
+          ? <span style={{ color: '#52c41a' }}>{formatCurrency(amount)}</span>
+          : <span style={{ color: '#aaa' }}>—</span>,
+    },
+    {
+      title: 'Thao tác', key: 'actions', width: 120,
       render: (_, record) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          size="large"
-          onClick={() => navigate(`/orders/${record.id}`)}
-        >
+        <Button type="link" icon={<EyeOutlined />} size="large" onClick={() => navigate(`/orders/${record.id}`)}>
           Chi tiết
         </Button>
       ),
@@ -110,12 +104,7 @@ const Orders = () => {
   ];
 
   if (error) {
-    return (
-      <ErrorMessage
-        message="Không thể tải danh sách đơn hàng"
-        description={(error as Error).message}
-      />
-    );
+    return <ErrorMessage message="Không thể tải danh sách đơn hàng" description={(error as Error).message} />;
   }
 
   return (
@@ -139,6 +128,17 @@ const Orders = () => {
           options={customers?.map((c) => ({ value: c.id, label: c.name }))}
           onChange={handleCustomerChange}
         />
+        <Select
+          placeholder="Loại đơn"
+          size="large"
+          allowClear
+          style={{ width: 150 }}
+          options={[
+            { value: 'SALE', label: 'Bán hàng' },
+            { value: 'PAYMENT', label: 'Trả nợ' },
+          ]}
+          onChange={handleOrderTypeChange}
+        />
         <RangePicker
           size="large"
           format="DD/MM/YYYY"
@@ -151,7 +151,7 @@ const Orders = () => {
         dataSource={pageData?.content ?? []}
         columns={columns}
         rowKey="id"
-        loading={isLoading}
+        loading={isLoading ? { indicator: <LoadingSpinner /> } : false}
         size="middle"
         style={{ fontSize: 16 }}
         locale={{ emptyText: 'Chưa có đơn hàng nào' }}

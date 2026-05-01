@@ -9,7 +9,6 @@ import {
   useDeleteProduct,
 } from '../../hooks/useProducts';
 import { useCategories } from '../../hooks/useCategories';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import ProductForm from '../../components/forms/ProductForm';
 import { formatCurrency } from '../../utils/formatters';

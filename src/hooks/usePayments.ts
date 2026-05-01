@@ -1,7 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notification } from 'antd';
+import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../utils/queryKeys';
-import { getPayments, searchPayments, createPayment } from '../api/payments';
+import { getPayments, searchPayments, getPaymentsByCustomer } from '../api/payments';
 import type { PaymentFilters } from '../types';
 
 export const usePayments = (filters?: PaymentFilters) =>
@@ -16,18 +15,11 @@ export const useSearchPayments = (filters: PaymentFilters) =>
     queryFn: () => searchPayments(filters),
   });
 
-export const useCreatePayment = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: createPayment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
-      queryClient.invalidateQueries({ queryKey: ['debts'] });
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      notification.success({ message: 'Ghi nhận thanh toán thành công' });
-    },
-    onError: (error: Error) => {
-      notification.error({ message: 'Lỗi', description: error.message });
-    },
+export const usePaymentsByCustomer = (customerId: number) =>
+  useQuery({
+    queryKey: QUERY_KEYS.paymentsByCustomer(customerId),
+    queryFn: () => getPaymentsByCustomer(customerId),
+    enabled: !!customerId,
   });
-};
+
+// NOTE: useCreatePayment đã bị bỏ — thanh toán chỉ tạo qua đơn hàng loại PAYMENT

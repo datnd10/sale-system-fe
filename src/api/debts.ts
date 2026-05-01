@@ -1,19 +1,12 @@
 import apiClient from './axios';
-import type { DebtSummaryPaged, CustomerDebtDetail, DebtFilters, PageResponse } from '../types';
+import type { DebtSummary, Customer } from '../types';
 
-export const getDebts = (): Promise<DebtSummaryPaged[]> =>
+/** Danh sách khách hàng còn nợ, sắp xếp giảm dần */
+export const getDebts = (): Promise<DebtSummary[]> =>
   apiClient.get('/api/debts');
 
-export const searchDebts = (filters: DebtFilters): Promise<PageResponse<DebtSummaryPaged>> => {
-  const params: Record<string, string | number> = {
-    page: filters.page ?? 0,
-    size: filters.size ?? 10,
-    sort: filters.sort ?? 'totalRemaining',
-    direction: filters.direction ?? 'DESC',
-  };
-  if (filters.customerName) params.customerName = filters.customerName;
-  return apiClient.get('/api/debts/search', { params });
-};
-
-export const getDebtsByCustomer = (customerId: number): Promise<CustomerDebtDetail> =>
+/** Công nợ chi tiết của một khách hàng (trả về CustomerResponse với totalDebt) */
+export const getDebtByCustomer = (customerId: number): Promise<Customer> =>
   apiClient.get(`/api/debts/customer/${customerId}`);
+
+// NOTE: /api/debts/search đã bị bỏ — dùng /api/debts thay thế

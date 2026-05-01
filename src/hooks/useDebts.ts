@@ -1,20 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../utils/queryKeys';
-import { getDebts, searchDebts, getDebtsByCustomer } from '../api/debts';
-import type { DebtFilters } from '../types';
+import { getDebts, getDebtByCustomer } from '../api/debts';
 
 export const useDebts = () =>
   useQuery({ queryKey: QUERY_KEYS.debts, queryFn: getDebts });
 
-export const useSearchDebts = (filters: DebtFilters) =>
+export const useDebtByCustomer = (customerId: number) =>
   useQuery({
-    queryKey: QUERY_KEYS.debtsSearch(filters),
-    queryFn: () => searchDebts(filters),
-  });
-
-export const useDebtsByCustomer = (customerId: number) =>
-  useQuery({
-    queryKey: QUERY_KEYS.debtsByCustomer(customerId),
-    queryFn: () => getDebtsByCustomer(customerId),
+    queryKey: QUERY_KEYS.debtByCustomer(customerId),
+    queryFn: () => getDebtByCustomer(customerId),
     enabled: !!customerId,
   });

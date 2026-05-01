@@ -15,7 +15,7 @@ import type { CreateOrderDto, CreateOrderItemDto } from '../../types';
 
 const { Title, Text } = Typography;
 
-interface OrderFormValues {
+interface SaleFormValues {
   customerId: number;
   orderDate: dayjs.Dayjs;
   paidImmediately?: number;
@@ -27,7 +27,7 @@ const OrderEdit = () => {
   const { id } = useParams<{ id: string }>();
   const orderId = Number(id);
   const navigate = useNavigate();
-  const [form] = Form.useForm<OrderFormValues>();
+  const [form] = Form.useForm<SaleFormValues>();
   const [pendingDto, setPendingDto] = useState<CreateOrderDto | null>(null);
 
   const { data: order, isLoading: orderLoading } = useOrderById(orderId);
@@ -59,9 +59,10 @@ const OrderEdit = () => {
     form.setFieldValue('items', updated);
   };
 
-  const handleFinish = (values: OrderFormValues) => {
+  const handleFinish = (values: SaleFormValues) => {
     const dto: CreateOrderDto = {
       customerId: values.customerId,
+      orderType: 'SALE',
       orderDate: values.orderDate.format('YYYY-MM-DD'),
       paidImmediately: values.paidImmediately ?? 0,
       note: values.note,
@@ -87,7 +88,13 @@ const OrderEdit = () => {
   if (orderLoading) return <Spin size="large" style={{ display: 'block', margin: '48px auto' }} />;
   if (!order) return null;
 
-  const initialValues: OrderFormValues = {
+  // Chỉ cho sửa đơn SALE
+  if (order.orderType === 'PAYMENT') {
+    navigate(`/orders/${orderId}`);
+    return null;
+  }
+
+  const initialValues: SaleFormValues = {
     customerId: order.customerId,
     orderDate: dayjs(order.orderDate),
     paidImmediately: order.paidImmediately,
@@ -122,11 +129,8 @@ const OrderEdit = () => {
             <Col xs={24} sm={12}>
               <Form.Item label="Khách hàng" name="customerId" rules={[{ required: true, message: 'Vui lòng chọn khách hàng' }]}>
                 <Select
-                  placeholder="Chọn khách hàng"
-                  size="large"
-                  loading={customersLoading}
-                  showSearch
-                  optionFilterProp="label"
+                  placeholder="Chọn khách hàng" size="large" loading={customersLoading}
+                  showSearch optionFilterProp="label"
                   options={customers?.map((c) => ({ value: c.id, label: `${c.name}${c.phone ? ` — ${c.phone}` : ''}` }))}
                 />
               </Form.Item>
@@ -187,33 +191,30 @@ const OrderEdit = () => {
               >
                 <InputNumber<number>
                   placeholder="0" size="large" min={0} max={totalAmount} style={{ width: '100%' }} suffix="₫"
-                  formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''}
-                  parser={(value) => { const c = (value ?? '').replace(/\./g, '').replace(/[^\d]/g, ''); return c ? parseInt(c, 10) : 0; }}
+                  formatter={(v) => v ? `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''}
+                  parser={(v) => { const c = (v ?? '').replace(/\./g, '').replace(/[^\d]/g, ''); return c ? parseInt(c, 10) : 0; }}
                 />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <div style={{ textAlign: 'right' }}>
-                <div>
-                  <Text style={{ fontSize: 17 }}>Tổng nợ: </Text>
-                  <Text strong style={{ fontSize: 20, color: remainingThisOrder > 0 ? '#ff4d4f' : '#52c41a' }}>
-                    {formatCurrency(remainingThisOrder)}
-                  </Text>
-                </div>
+                <Text style={{ fontSize: 17 }}>Còn nợ: </Text>
+                <Text strong style={{ fontSize: 20, color: remainingThisOrder > 0 ? '#ff4d4f' : '#52c41a' }}>
+                  {formatCurrency(remainingThisOrder)}
+                </Text>
               </div>
             </Col>
           </Row>
           <Divider />
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
             <Button size="large" onClick={() => navigate(`/orders/${orderId}`)}>Hủy</Button>
-            <Button type="primary" htmlType="submit" size="large" loading={updateOrder.isPending} disabled={updateOrder.isPending}>
+            <Button type="primary" htmlType="submit" size="large" loading={updateOrder.isPending}>
               Lưu thay đổi
             </Button>
           </div>
         </Card>
       </Form>
 
-      {/* Confirm modal */}
       <Modal
         open={!!pendingDto}
         title={<span style={{ fontSize: 18 }}>Xác nhận lưu thay đổi</span>}

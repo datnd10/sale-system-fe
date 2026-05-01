@@ -16,7 +16,7 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-// Search params dùng chung cho các search endpoint
+// Search params dùng chung
 export interface SearchParams {
   page?: number;
   size?: number;
@@ -38,9 +38,32 @@ export interface CustomerSearchParams extends SearchParams {
   phone?: string;
 }
 
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+export type ProductUnit = 'KG' | 'TAN' | 'CAY' | 'MET' | 'CAI' | 'M2';
+
+export const PRODUCT_UNIT_OPTIONS: { value: ProductUnit; label: string; description: string }[] = [
+  // { value: 'KG',  label: 'kg',  description: 'Kilogram' },
+  // { value: 'TAN', label: 'tấn', description: 'Tấn' },
+  // { value: 'CAY', label: 'cây', description: 'Cây / thanh' },
+  { value: 'MET', label: 'm',   description: 'Mét' },
+  { value: 'CAI', label: 'cái', description: 'Cái' },
+  { value: 'M2',  label: 'm²',  description: 'Mét vuông' },
+];
+
+/** Loại đơn hàng — khớp với BE enum OrderType */
+export type OrderType = 'SALE' | 'PAYMENT';
+
+export const ORDER_TYPE_LABELS: Record<OrderType, string> = {
+  SALE: 'Bán hàng',
+  PAYMENT: 'Trả nợ',
+};
+
+// ─── Entities ─────────────────────────────────────────────────────────────────
+
 export interface Category {
   id: number;
-  code: string; // DM0000001
+  code: string;
   name: string;
   description?: string;
   active: boolean;
@@ -50,60 +73,51 @@ export interface Category {
 
 export interface Product {
   id: number;
-  code: string; // SP0000001
+  code: string;
   name: string;
   categoryId: number;
   categoryName: string;
-  unit: string;       // enum key: KG, TAN, CAY, MET, CAI, M2
+  unit: ProductUnit;
   price: number;
-  width?: number;     // chiều rộng mặc định (tùy chọn)
+  width?: number;
   description?: string;
   active: boolean;
 }
 
-// Enum ProductUnit — phải khớp với BE
-export type ProductUnit = 'KG' | 'TAN' | 'CAY' | 'MET' | 'CAI' | 'M2';
-
-export const PRODUCT_UNIT_OPTIONS: { value: ProductUnit; label: string; description: string }[] = [
-  { value: 'KG',  label: 'kg',  description: 'Kilogram' },
-  { value: 'TAN', label: 'tấn', description: 'Tấn' },
-  { value: 'CAY', label: 'cây', description: 'Cây / thanh' },
-  { value: 'MET', label: 'm',   description: 'Mét' },
-  { value: 'CAI', label: 'cái', description: 'Cái' },
-  { value: 'M2',  label: 'm²',  description: 'Mét vuông' },
-];
-
 export interface Customer {
   id: number;
-  code: string; // KH0000001
+  code: string;
   name: string;
   phone?: string;
   address?: string;
   hasDebt: boolean;
-  totalDebt?: number; // tổng nợ còn lại, có trong GET /customers/{id}
+  /** Tổng nợ hiện tại — chỉ có trong GET /customers/{id} */
+  totalDebt?: number;
 }
 
 export interface Order {
   id: number;
-  code: string; // HD0000001
+  code: string;
   customerId: number;
   customerName: string;
-  orderDate: string; // ISO date
+  /** SALE = bán hàng, PAYMENT = trả nợ */
+  orderType: OrderType;
+  orderDate: string;
   totalAmount: number;
   paidImmediately: number;
-  remainingDebt: number; // totalAmount - paidImmediately
   note?: string;
   active: boolean;
-  items?: OrderItem[]; // chỉ có trong GET /orders/{id}
+  createdAt: string;
+  updatedAt: string;
+  /** Chỉ có trong GET /orders/{id}, chỉ có với SALE */
+  items?: OrderItem[];
 }
 
 export interface OrderItem {
   id: number;
   productId: number;
   productName: string;
-  productCode: string;
-  productUnit: string; // enum key: KG, TAN, CAY, MET, CAI, M2
-  unit: string;
+  productUnit: ProductUnit;
   count: number;
   length?: number;
   width?: number;
@@ -112,71 +126,46 @@ export interface OrderItem {
   subtotal: number;
 }
 
-export interface Debt {
-  debtId: number;
-  debtCode: string;
-  orderId?: number;
-  orderCode?: string;
-  originalAmount: number;
-  remainingAmount: number;
-  createdAt: string;
-}
-
-export interface CustomerDebtDetail {
-  customerId: number;
-  customerCode: string;
-  customerName: string;
-  totalRemaining: number;
-  debts: Debt[];
-}
-
 export interface Payment {
   id: number;
-  code: string; // TT0000001
+  code: string;
   customerId: number;
   customerName: string;
+  /** ID đơn hàng tạo ra payment này */
+  orderId?: number;
+  orderCode?: string;
   amount: number;
   paymentDate: string;
   note?: string;
   createdAt: string;
 }
 
+// ─── Statistics ───────────────────────────────────────────────────────────────
+
 export interface RevenueStatistics {
   totalOrders: number;
   totalRevenue: number;
-  totalPaid: number;
+  /** Tổng đã thu = Σ Payment.amount */
+  totalCollected: number;
   totalDebt: number;
 }
 
-export interface MonthlyRevenue {
-  month: number;
-  revenue: number;
-}
-
-// Response từ /api/statistics/debts
+/** Response từ /api/statistics/debts */
 export interface DebtSummary {
   customerId: number;
   customerCode: string;
   customerName: string;
-  remainingDebt: number; // field từ /api/statistics/debts
+  remainingDebt: number;
 }
 
-// Response từ /api/debts/search (phân trang)
-export interface DebtSummaryPaged {
-  customerId: number;
-  customerCode: string;
-  customerName: string;
-  customerPhone?: string;
-  totalRemaining: number;
-}
-
-// Response từ /api/statistics/revenue/monthly
+/** Response từ /api/statistics/revenue/monthly */
 export interface MonthlyRevenueResponse {
   year: number;
-  monthlyRevenue: number[]; // 12 phần tử, index 0 = tháng 1
+  monthlyRevenue: number[];
 }
 
-// DTOs
+// ─── DTOs ─────────────────────────────────────────────────────────────────────
+
 export interface CreateCategoryDto {
   name: string;
   description?: string;
@@ -196,14 +185,7 @@ export interface CreateProductDto {
   description?: string;
 }
 
-export interface UpdateProductDto {
-  name: string;
-  categoryId: number;
-  unit: ProductUnit;
-  price: number;
-  width?: number;
-  description?: string;
-}
+export interface UpdateProductDto extends CreateProductDto {}
 
 export interface CreateCustomerDto {
   name: string;
@@ -211,19 +193,7 @@ export interface CreateCustomerDto {
   address?: string;
 }
 
-export interface UpdateCustomerDto {
-  name: string;
-  phone?: string;
-  address?: string;
-}
-
-export interface CreateOrderDto {
-  customerId: number;
-  orderDate: string;
-  paidImmediately: number;
-  note?: string;
-  items: CreateOrderItemDto[];
-}
+export interface UpdateCustomerDto extends CreateCustomerDto {}
 
 export interface CreateOrderItemDto {
   productId: number;
@@ -233,38 +203,35 @@ export interface CreateOrderItemDto {
   unitPrice: number;
 }
 
-export interface CreatePaymentDto {
+/** DTO tạo đơn hàng — dùng cho cả SALE và PAYMENT */
+export interface CreateOrderDto {
   customerId: number;
-  amount: number;
-  paymentDate: string;
+  orderType: OrderType;
+  orderDate: string;
   note?: string;
+  /** Chỉ dùng cho SALE */
+  items?: CreateOrderItemDto[];
+  /** Chỉ dùng cho SALE — số tiền trả ngay khi mua */
+  paidImmediately?: number;
+  /** Chỉ dùng cho PAYMENT — số tiền trả nợ */
+  amount?: number;
 }
 
-// Filters
-export interface OrderFilters {
+// ─── Filters ──────────────────────────────────────────────────────────────────
+
+export interface OrderFilters extends SearchParams {
   customerId?: number;
+  orderType?: OrderType;
   from?: string;
   to?: string;
-  page?: number;
-  size?: number;
-  sort?: string;
-  direction?: 'ASC' | 'DESC';
 }
 
-export interface PaymentFilters {
+export interface PaymentFilters extends SearchParams {
   from?: string;
   to?: string;
   customerName?: string;
-  page?: number;
-  size?: number;
-  sort?: string;
-  direction?: 'ASC' | 'DESC';
 }
 
-export interface DebtFilters {
+export interface DebtFilters extends SearchParams {
   customerName?: string;
-  page?: number;
-  size?: number;
-  sort?: string;
-  direction?: 'ASC' | 'DESC';
 }
